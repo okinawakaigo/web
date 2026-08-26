@@ -1,0 +1,281 @@
+/* ==========================================================
+   沖縄介護センター 採用サイト（トップページ骨組み）
+   デザイン方針: 白〜ベージュ地・緑アクセント・青は使わない
+   ゴシック体、数字の強調に欧文書体、スマホ前提、動きはシンプルに
+   ========================================================== */
+
+:root {
+  --color-bg: #FAF7F2;         /* ベージュ寄りの地色 */
+  --color-surface: #FFFFFF;
+  --color-text: #2E2E2E;
+  --color-text-sub: #6B6B63;
+  --color-accent: #4B7A4B;     /* 緑（アクセント） */
+  --color-accent-dark: #365A36;
+  --color-border: #E4DED3;
+
+  --font-jp: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-en: "Barlow", "Helvetica Neue", Arial, sans-serif; /* 数字の強調用 */
+
+  --max-width: 480px; /* スマホ前提。1本道レイアウト */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-jp);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.section {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 48px 20px;
+}
+
+.section-title {
+  font-size: 20px;
+  margin: 0 0 24px;
+  border-left: 4px solid var(--color-accent);
+  padding-left: 12px;
+}
+
+/* ボタン共通 */
+.btn {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-jp);
+  border-radius: 999px;
+  padding: 14px 28px;
+  font-weight: bold;
+  transition: opacity 0.2s ease;
+}
+.btn:active {
+  opacity: 0.8;
+}
+.btn-primary {
+  background-color: var(--color-accent);
+  color: #fff;
+}
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-accent-dark);
+  border: 1px solid var(--color-accent);
+}
+.btn-large {
+  display: block;
+  width: 100%;
+  padding: 18px 24px;
+  font-size: 16px;
+}
+
+/* 未実装領域を示すダミー枠 */
+.placeholder-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-sub);
+  font-size: 13px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-border),
+    var(--color-border) 10px,
+    var(--color-surface) 10px,
+    var(--color-surface) 20px
+  );
+}
+
+/* §1 ファーストビュー */
+.hero {
+  padding: 0;
+  max-width: none;
+}
+.hero-photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+.hero-body {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  text-align: center;
+}
+.eyebrow {
+  color: var(--color-accent-dark);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  margin: 0 0 12px;
+}
+.catch {
+  font-size: 26px;
+  margin: 0 0 24px;
+}
+
+/* §2 数字・条件 */
+.number-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.number-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.job-name {
+  margin: 0;
+  font-size: 15px;
+}
+.wage {
+  margin: 0;
+  font-family: var(--font-en);
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--color-accent-dark);
+}
+
+/* §3 働く環境 */
+.lead-text {
+  font-size: 16px;
+  color: var(--color-text-sub);
+}
+
+/* §4 職種紹介 */
+.job-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.job-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.job-card-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+.job-card-text {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--color-text-sub);
+}
+
+/* §5 職員の声 */
+.voice-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.voice-card.placeholder {
+  height: 120px;
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.voice-status {
+  color: var(--color-text-sub);
+  margin: 0;
+}
+.voice-more {
+  text-align: center;
+  font-size: 14px;
+}
+.voice-more a {
+  color: var(--color-accent-dark);
+}
+
+/* §6 説明会予約 */
+.booking {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  text-align: center;
+}
+.booking-note {
+  font-size: 15px;
+  margin: 0 0 16px;
+}
+.booking-proof {
+  font-family: var(--font-en);
+  color: var(--color-accent-dark);
+  font-weight: bold;
+  margin: 0 0 24px;
+}
+.booking-disclaimer {
+  font-size: 12px;
+  color: var(--color-text-sub);
+  margin: 16px 0 0;
+}
+
+/* §7 会社概要 */
+.company-info {
+  margin: 0 0 20px;
+}
+.company-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.company-row dt {
+  font-size: 12px;
+  color: var(--color-text-sub);
+}
+.company-row dd {
+  margin: 0;
+  font-size: 15px;
+}
+.company-map {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* §8 フッター */
+.footer {
+  text-align: center;
+  color: var(--color-text-sub);
+  font-size: 13px;
+  padding-bottom: 64px;
+}
+.footer p {
+  margin: 4px 0;
+}
+.footer-link {
+  margin-top: 16px;
+}
+.footer-link {
+  color: var(--color-accent-dark);
+}
+.footer-link a {
+  color: inherit;
+}
+
+/* 動き: スクロールでふわっと現れる（シンプルに） */
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-in.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
