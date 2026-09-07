@@ -23,7 +23,7 @@ pnpm test
 pnpm build
 ```
 
-Worker・配信ヘッダー・404を確認するときは `pnpm preview`。GitHub Actionsは検証のみを行う。詳細は [README.md](README.md) と [docs/deployment.md](docs/deployment.md)。
+Worker・配信ヘッダー・404を確認するときは `pnpm preview`。GitHub ActionsはPRで検証し、`main` への対象ファイルのpushでは検証成功後にWorkersへデプロイする。対象アカウントは `apps/edge/wrangler.jsonc` に固定し、CIの認証にはリポジトリSecretの `CLOUDFLARE_API_TOKEN` を使う。詳細は [README.md](README.md) と [docs/deployment.md](docs/deployment.md)。
 
 ## 実装方針
 

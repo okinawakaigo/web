@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "okinawa-care-recruit",
+  "account_id": "869d7f9f9faebf609a8363a4f9d9e38b",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-06",
   "assets": {
@@ -11,5 +12,6 @@
   },
   "observability": { "enabled": false }
   // Optional D1 and rate limit bindings: see docs/deployment.md.
-  // No account IDs, database IDs or production routes are assumed here.
+  // Account: Hidechika@okc2000.com's Account (okinawakaigo.com).
+  // Production routes and optional database bindings are configured separately.
 }

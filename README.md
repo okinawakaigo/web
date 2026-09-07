@@ -50,7 +50,7 @@ pnpm preview    # ビルド後、Workersで配信 http://127.0.0.1:8787
 - canonical、OGP、sitemap、robots、プライバシーページ、404、ローカルフォント、WebP画像
 - `/design/` で実装と同じコンポーネント・トークンを確認できるデザインガイド
 - ヒーローは当初の大きな写真1枚。ページ全体の実写撮影に向けた、画像付きの撮影依頼メモ `/photo-brief/`
-- GitHub Actionsによる型チェック・テスト・ビルド・Wranglerドライラン
+- GitHub Actionsによる型チェック・テスト・ビルド・Wranglerドライラン。`main` への対象ファイルのpush時は成功後にWorkersへ自動デプロイ（APIトークンの設定が必要）
 
 ## 現在の公開準備状況
 
