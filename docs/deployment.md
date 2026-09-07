@@ -23,7 +23,16 @@
 | `BASIC_AUTH_USERNAME` | 閲覧用ID。例：`recruit`。半角英数字で始まる1〜64文字（英数字・`.`・`_`・`@`・`-`） |
 | `BASIC_AUTH_PASSWORD` | パスワードマネージャー等で生成した16〜256文字のランダムなパスワード。改行・制御文字は不可 |
 
-トークンには対象アカウントの `Workers Scripts: Edit` を設定します。[Custom Domainの接続API](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/update/)もこの権限を使用します。ゾーンは `wrangler.jsonc` の `zone_id` で指定しています。Account IDはWranglerの設定から取得するため、別途Secretに登録する必要はありません。トークンはデプロイステップだけに渡します。未設定の場合はエラーを表示して停止します。
+トークンには次の権限と対象リソースを設定します。
+
+| Permissions | 対象リソース |
+| --- | --- |
+| Account → Workers Scripts → Edit | 上記の配信先アカウントのみ |
+| Zone → Workers Routes → Read | `okinawakaigo.com` のみ |
+
+[Custom Domainの接続API](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/update/)は `Workers Scripts: Edit` を使用します。加えて、Wranglerは接続前に既存ルートとの重複を調べるため、[ルート一覧API](https://developers.cloudflare.com/api/resources/workers/subresources/routes/methods/list/)の `Workers Routes: Read` が必要です。ゾーンは `wrangler.jsonc` の `zone_id` で指定しています。Account IDはWranglerの設定から取得するため、別途Secretに登録する必要はありません。トークンはデプロイステップだけに渡します。未設定の場合はエラーを表示して停止します。
+
+`/zones/.../workers/routes` でAuthentication error（code 10000）が出た場合は、CloudflareのMy Profile → API Tokensで既存トークンを編集し、上記のZone権限とZone Resourcesの対象を確認します。同じトークンの権限編集ならGitHub Secretの更新は不要です。トークンを再発行した場合は `CLOUDFLARE_API_TOKEN` も更新してください。
 
 閲覧用ID・パスワードも **Secrets** に登録し、Variables・ソースコード・`PUBLIC_*`には入れません。CIは形式を検証し、権限を600にした一時JSONファイルから `wrangler deploy --secrets-file` でコードと一緒にWorker Secretsへ登録します。一時ファイルは終了時に削除します。初回も認証情報とコードを同じバージョンで公開するため、Cloudflare管理画面でWorkerを先に作る必要はありません。[Secretsの公式手順](https://developers.cloudflare.com/workers/configuration/secrets/)を参照してください。
 
