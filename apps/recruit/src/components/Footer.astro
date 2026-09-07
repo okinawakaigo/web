@@ -1,0 +1,59 @@
+---
+import Brand from "@okinawa-care/ui/Brand.astro";
+import Icon from "@okinawa-care/ui/Icon.astro";
+import { company } from "@okinawa-care/content";
+---
+
+<footer class="site-footer">
+  <div class="content-container footer-main">
+    <div><Brand /><p>〒{company.postalCode}<br />{company.address}</p></div>
+    <div class="footer-links">
+      <a href={company.website} target="_blank" rel="noopener noreferrer"
+        >ご利用者・ご家族の方へ <Icon name="external" size={15} /></a
+      ><a href={company.instagram} target="_blank" rel="noopener noreferrer"
+        >Instagram <Icon name="external" size={15} /></a
+      ><a href="/privacy/">プライバシーポリシー</a>
+    </div>
+  </div>
+  <div class="content-container footer-bottom">
+    <span>© {new Date().getFullYear()} Okinawa Care Center</span><a href="#main"
+      >ページの先頭へ ↑</a>
+  </div>
+</footer>
+<style>
+  @reference "@okinawa-care/ui/styles.css";
+  @layer components {
+    .site-footer {
+      @apply bg-paper pt-16 px-0 pb-6;
+    }
+    .footer-main {
+      @apply flex justify-between gap-8 pb-12;
+    }
+    .footer-main p {
+      @apply mt-6 text-caption leading-body text-muted;
+    }
+    .footer-links {
+      @apply flex flex-col items-start gap-5 text-caption pt-2;
+    }
+    .footer-links a {
+      @apply inline-flex items-center gap-6 no-underline;
+    }
+    .footer-links a:hover {
+      @apply underline;
+    }
+    .footer-bottom {
+      @apply border-t border-solid border-line pt-6 flex justify-between gap-6 text-micro text-muted;
+    }
+    .footer-bottom a {
+      @apply no-underline;
+    }
+    @media (width < theme(--breakpoint-sm)) {
+      .footer-main {
+        @apply flex-col;
+      }
+      .site-footer {
+        @apply pb-27;
+      }
+    }
+  }
+</style>

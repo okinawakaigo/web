@@ -1,0 +1,55 @@
+---
+interface Props {
+  inverse?: boolean;
+}
+const { inverse = false } = Astro.props;
+---
+
+<a
+  href="/"
+  aria-label="沖縄介護センター 採用サイト ホーム"
+  class:list={["brand", { inverse }]}
+>
+  <svg width="39" height="39" viewBox="0 0 40 40" aria-hidden="true"
+    ><path
+      d="M6 25C6 10 20 5 20 5s14 5 14 20"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3"
+      stroke-linecap="round"></path><path
+      d="M11 24c4 0 4 6 9 6s5-6 9-6M20 13v9"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3"
+      stroke-linecap="round"></path></svg
+  >
+  <span
+    ><strong>沖縄介護センター</strong><small>あなたの「想い」を支えます</small
+    ></span
+  >
+</a>
+<style>
+  @reference "../styles.css";
+  @layer components {
+    .brand {
+      @apply inline-flex items-center gap-3 no-underline text-primary shrink-0;
+    }
+    .brand strong {
+      @apply block text-subtitle tracking-wide leading-compact font-semibold;
+    }
+    .brand small {
+      @apply block text-micro tracking-caption;
+    }
+    .brand.inverse {
+      @apply text-paper;
+    }
+    @media (width < theme(--breakpoint-xs)) {
+      .brand strong {
+        @apply text-base;
+      }
+      .brand {
+        @apply gap-2;
+      }
+    }
+  }
+</style>

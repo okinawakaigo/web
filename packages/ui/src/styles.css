@@ -1,0 +1,10 @@
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "./tokens.css" layer(theme);
+/* Keep the site's explicit base styles, including native list/form semantics. */
+@import "./base.css" layer(base);
+@import "./components.css" layer(components);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@source './components';

@@ -1,0 +1,83 @@
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+}
+html {
+  @apply scroll-smooth scroll-pt-27;
+}
+body {
+  @apply m-0 bg-paper text-ink font-body text-base font-normal leading-body antialiased;
+  overflow-wrap: anywhere;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button,
+a,
+select,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+select,
+summary {
+  @apply cursor-pointer;
+}
+a {
+  color: inherit;
+  text-underline-offset: 0.25em;
+}
+img {
+  @apply block max-w-full h-auto;
+}
+button {
+  color: inherit;
+}
+h1,
+h2,
+h3,
+p,
+figure {
+  @apply m-0;
+}
+h1,
+h2,
+h3 {
+  @apply font-semibold;
+}
+button,
+a {
+  touch-action: manipulation;
+}
+button:disabled {
+  @apply cursor-not-allowed;
+}
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 5px;
+}
+[hidden] {
+  display: none !important;
+}
+@variant max-sm {
+  html {
+    @apply scroll-pt-24;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

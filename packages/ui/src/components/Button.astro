@@ -1,0 +1,44 @@
+---
+import Icon from "./Icon.astro";
+import type { HTMLAttributes } from "astro/types";
+type SharedProps = {
+  variant?: "primary" | "outline" | "light";
+  icon?: string | false;
+};
+type Props = SharedProps &
+  (
+    | (HTMLAttributes<"a"> & { as?: "a" })
+    | (HTMLAttributes<"button"> & { as: "button" })
+  );
+const {
+  as: Tag = "a",
+  variant = "primary",
+  icon = "arrow",
+  class: className,
+  ...props
+} = Astro.props;
+---
+
+{
+  Tag === "button" ? (
+    <button
+      {...({ type: "button", ...props } as HTMLAttributes<"button">)}
+      class:list={["button", `button--${variant}`, className]}
+    >
+      <span>
+        <slot />
+      </span>
+      {icon && <Icon name={icon} size={19} />}
+    </button>
+  ) : (
+    <a
+      {...(props as HTMLAttributes<"a">)}
+      class:list={["button", `button--${variant}`, className]}
+    >
+      <span>
+        <slot />
+      </span>
+      {icon && <Icon name={icon} size={19} />}
+    </a>
+  )
+}
