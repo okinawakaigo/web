@@ -6,7 +6,7 @@ export interface Env {
   METRICS_RATE_LIMITER?: RateLimit;
 }
 
-const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
+const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex, nofollow, noarchive' };
 const reply = (status: number) => new Response(null, { status, headers });
 
 async function recordEvent(request: Request, env: Env): Promise<Response> {

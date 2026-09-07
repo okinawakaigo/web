@@ -60,7 +60,8 @@ Webページはローカルで動作します。Cloudflareへの公開、DNS変�
 - **給与等は未確認**：過去の議事録に誤記の記録があるため転載していません。現状は条件を問い合わせる表示です。確定後、職種データへ募集条件を追加してください。
 - **人物写真**：ヒーローは当初のイメージ写真を仮使用。撮影依頼ページにはAI生成の参考画像を明示して掲載しています。[撮影依頼メモ](docs/photography-brief.md)に沿って実写を撮影し、ヒーローと本文の写真を整えます。
 - **ロゴ**：新しいマークの提案。既存の正式ロゴの改変ではありません。
-- **検索登録**：初期状態はnoindexです。noindexは閲覧制限ではありません。限定レビューをインターネット上で行う場合はCloudflare Access等を設定してください。
+- **限定公開**：公開先は `https://recruit.okinawakaigo.com/`。Cloudflare Accessで許可メールだけが閲覧できるよう設定してから公開します。`workers.dev` とプレビューURLは無効です。
+- **検索登録**：CIでnoindexを固定し、HTTPレスポンスにも `X-Robots-Tag` を付けています。Access設定の確認後に `RECRUIT_ACCESS_READY=true` を登録するまで、CIのデプロイは停止します。
 
 運用手順は [deployment.md](docs/deployment.md)、設計判断は [architecture.md](docs/architecture.md)、素材・原稿の確認箇所は [content-sources.md](docs/content-sources.md) を参照してください。
 

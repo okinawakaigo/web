@@ -29,7 +29,8 @@ Worker・配信ヘッダー・404を確認するときは `pnpm preview`。GitHu
 
 - 説明会・見学相談を入口にする。受付はGoogleフォームに統一し、採用の電話リンクは設けない
 - フォーム未設定時は「受付準備中」と表示し、入力・送信を無効にする。個人情報はサイトや計測DBで受け付けない
-- 検索登録・計測は初期状態で無効。未確認の給与・勤務条件・職員の声は作らない
+- 公開先は `https://recruit.okinawakaigo.com/`。Cloudflare Accessで許可メールを制限し、設定確認後に `RECRUIT_ACCESS_READY=true` を登録する。`workers.dev`・プレビューURLは無効にする
+- レビュー中はCIでnoindexを固定し、静的配信・APIにも `X-Robots-Tag` を付ける。計測は初期状態で無効。未確認の給与・勤務条件・職員の声は作らない
 - Astroで静的HTMLを生成し、操作に必要な箇所だけTypeScriptを使う。共通化は実際に再利用するUIとデータに限定する
 - デザイン方針は [docs/architecture.md](docs/architecture.md)、素材・原稿の確認箇所は [docs/content-sources.md](docs/content-sources.md) を参照する
 - 旧構成の会社トップ・職種別5ページ・ツアーナースページはアーカイブに保存済み。今後の企業サイトや職種別ページを設計する際の参考にする

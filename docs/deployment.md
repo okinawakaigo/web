@@ -20,7 +20,7 @@
 | --- | --- |
 | `CLOUDFLARE_API_TOKEN` | 対象アカウントのWorkerをデプロイできるAPIトークン |
 
-現在の構成は静的ファイルとWorkerのみのため、トークンの権限は対象アカウントの `Workers Scripts: Edit` を基本とします。Account IDはWranglerの設定から取得するため、別途Secretに登録する必要はありません。トークンはデプロイステップだけに渡します。未設定の場合はエラーを表示して停止します。
+トークンには対象アカウントの `Workers Scripts: Edit` を設定します。[Custom Domainの接続API](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/update/)もこの権限を使用します。ゾーンは `wrangler.jsonc` の `zone_id` で指定しています。Account IDはWranglerの設定から取得するため、別途Secretに登録する必要はありません。トークンはデプロイステップだけに渡します。未設定の場合はエラーを表示して停止します。
 
 ### ビルド時のVariables
 
@@ -28,22 +28,37 @@
 
 | 名前 | 未設定時 |
 | --- | --- |
-| `PUBLIC_SITE_URL` | `https://okinawakaigo.com` |
-| `PUBLIC_SITE_INDEXABLE` | `false`（検索登録を無効） |
 | `PUBLIC_ANALYTICS_ENABLED` | `false`（計測を無効） |
 | `PUBLIC_RESERVATION_URL` | 空（受付準備中） |
 | `PUBLIC_FORM_SOURCE_FIELD`、`PUBLIC_FORM_MEDIUM_FIELD`、`PUBLIC_FORM_ROLE_FIELD`、`PUBLIC_FORM_STEP_FIELD` | 空 |
 
-Variablesは `pnpm build` 時に取り込まれます。設定を変えただけでは再デプロイされないため、`main` の対象ファイルを更新してpushするか、直近の `main` 用ワークフローを再実行します。フォームのURLやentry IDの詳細は後述の「Googleフォーム」を参照してください。
+公開URLは `https://recruit.okinawakaigo.com`、検索登録は `false` にCIで固定しています。`PUBLIC_SITE_URL` と `PUBLIC_SITE_INDEXABLE` のGitHub Variablesは使いません。
 
-初期の配信先はWorkerの `workers.dev` URLです。独自ドメインへの接続は後述の `routes` 設定で行います。Workers Buildsを別途接続すると二重にデプロイされるため、このGitHub Actionsを使う場合は接続不要です。
+その他のVariablesは `pnpm build` 時に取り込まれます。設定を変えただけでは再デプロイされないため、`main` の対象ファイルを更新してpushするか、直近の `main` 用ワークフローを再実行します。フォームのURLやentry IDの詳細は後述の「Googleフォーム」を参照してください。
+
+配信先は `https://recruit.okinawakaigo.com/` です。`workers_dev` と `preview_urls` を `false` に固定し、Accessの対象外となる直接アクセス経路を無効にしています。Workers Buildsを別途接続すると二重にデプロイされるため、このGitHub Actionsを使う場合は接続不要です。
+
+## メール認証による限定公開
+
+閲覧制限はCloudflare AccessのSelf-hosted applicationで行います。設定対象は `recruit.okinawakaigo.com` の全パスです。noindexは検索登録を避ける指定であり、閲覧制限はAccessが担当します。
+
+1. 対象アカウントのCloudflare Zero Trustを有効化します。チーム名・プラン選択などの初期設定が必要な場合はアカウント管理者が設定します。
+2. Access controls → ApplicationsからSelf-hosted applicationを追加し、公開ホスト名を `recruit.okinawakaigo.com` に設定します。パスは空にして全ページ・画像・APIを対象にします。
+3. 認証方法はメールのOne-time PINを有効にします。
+4. AllowポリシーのInclude条件で、承認されたメールアドレスを `Emails` に指定します。メールドメインで許可するときは `Emails ending in` を使います。`Everyone` や認証方法だけを許可条件にしません。
+5. Accessアプリと許可ポリシーが保存できたことを確認してから、GitHub Actions Variable `RECRUIT_ACCESS_READY` を `true` にします。この値は初期設定完了の確認用で、Accessポリシーそのものではありません。未設定の場合、CIはデプロイ前に停止します。
+6. デプロイ後、未認証のHTTPSアクセスがAccessのログイン画面へ移ることと、承認済みメールで認証できることを確認します。HTTPアクセスも確認し、HTTPSの認証画面へ転送される設定にします。
+
+初回確認時（2026-09-07）はAccessが未有効で、公開先ドメインにWorkerは接続されていません。許可メールの確定・Access初期設定・保存済みポリシーの確認が完了するまでは `RECRUIT_ACCESS_READY` を設定しません。
+
+[Cloudflare Accessの公式手順](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/)を参照してください。
 
 ## ページの設定
 
 `apps/recruit/.env.example` を同じディレクトリの `.env` にコピーします。これらの `PUBLIC_*` はビルド時に埋め込まれる公開情報です。秘密情報は入れないでください。
 
-- `PUBLIC_SITE_URL=https://okinawakaigo.com`：canonical、OGP、サイトマップの基準URL。
-- `PUBLIC_SITE_INDEXABLE=false`：レビュー中はnoindex。公開原稿・写真の確認後にtrueへ変更。
+- `PUBLIC_SITE_URL=https://recruit.okinawakaigo.com`：canonical、OGP、サイトマップの基準URL。
+- `PUBLIC_SITE_INDEXABLE=false`：レビュー中はnoindex。CIでも `false` に固定し、静的配信とAPIに `X-Robots-Tag: noindex, nofollow, noarchive` を付けています。検索登録を許可する際は、CIの固定値、`apps/recruit/public/_headers`、`apps/edge/src/index.ts` をあわせて見直します。
 - `PUBLIC_ANALYTICS_ENABLED=false`：D1・Rate Limiterを設定するまで無効。
 
 企業サイトを同一ドメインに追加する際はルーティングとcanonicalを再設計します。既存サイトのDNS・メール設定は、このサイトの公開と一括変更しないでください。
@@ -122,13 +137,13 @@ Googleスプレッドシートへの自動同期・月次レポートは、こ�
 
 | 入口 | URL |
 | --- | --- |
-| Instagramプロフィール | `https://okinawakaigo.com/?utm_source=instagram&utm_medium=bio` |
-| Instagramハイライト | `https://okinawakaigo.com/?utm_source=instagram&utm_medium=highlight` |
-| Instagram投稿・DM | `https://okinawakaigo.com/?utm_source=instagram&utm_medium=post` |
-| Indeed | `https://okinawakaigo.com/?utm_source=indeed&utm_medium=listing` |
-| Jwarm | `https://okinawakaigo.com/?utm_source=jwarm&utm_medium=listing` |
-| 既存サイト | `https://okinawakaigo.com/?utm_source=corp&utm_medium=link` |
-| 説明会・配布物のQR | `https://okinawakaigo.com/?utm_source=qr&utm_medium=print` |
+| Instagramプロフィール | `https://recruit.okinawakaigo.com/?utm_source=instagram&utm_medium=bio` |
+| Instagramハイライト | `https://recruit.okinawakaigo.com/?utm_source=instagram&utm_medium=highlight` |
+| Instagram投稿・DM | `https://recruit.okinawakaigo.com/?utm_source=instagram&utm_medium=post` |
+| Indeed | `https://recruit.okinawakaigo.com/?utm_source=indeed&utm_medium=listing` |
+| Jwarm | `https://recruit.okinawakaigo.com/?utm_source=jwarm&utm_medium=listing` |
+| 既存サイト | `https://recruit.okinawakaigo.com/?utm_source=corp&utm_medium=link` |
+| 説明会・配布物のQR | `https://recruit.okinawakaigo.com/?utm_source=qr&utm_medium=print` |
 
 許可していないパラメータは保存しません。パラメータがないアクセスは `direct/none` とし、検索と直接アクセスを推定で区別しません。
 
@@ -152,11 +167,7 @@ pnpm --filter @okinawa-care/edge exec wrangler whoami
 pnpm deploy
 ```
 
-独自ドメインを接続するときは、Cloudflare管理下のゾーンを用意し、`wrangler.jsonc` に追記します。
-
-```jsonc
-"routes": [{ "pattern": "okinawakaigo.com", "custom_domain": true }]
-```
+独自ドメインは `wrangler.jsonc` の `routes` に設定済みです。Cloudflare Accessによる保護を先に設定してからデプロイします。Custom Domainの接続に伴うDNS・証明書はCloudflare Workersが管理します。既存の同名レコードがある場合は、用途を確認してから切り替えます。
 
 Cloudflare Workers Buildsを使用する場合、接続先は `okinawakaigo/web`、ルートディレクトリはリポジトリのルート（`/`）、ビルドコマンドは `pnpm build`、デプロイコマンドは `pnpm --filter @okinawa-care/edge exec wrangler deploy`。Node 24とpnpm 9.15.4を使用し、ビルド用の `PUBLIC_*` を設定します。配信対象は `apps/recruit/dist` のみで、`archive/` は含まれません。
 
