@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { hasBasicAuthCredentials } from '../src/basic-auth.ts';
+import { assertDenied } from './verify-response.mjs';
 
 const origin = new URL(process.env.RECRUIT_VERIFY_URL ?? 'https://recruit.okinawakaigo.com');
 const local = ['localhost', '127.0.0.1', '[::1]'].includes(origin.hostname);
@@ -54,10 +55,8 @@ const paths = [
 ];
 for (const [path, expectedStatus] of paths) {
   const denied = await get(path);
-  assert.equal(denied.status, 401, `Unauthenticated ${path}`);
-  assert.match(denied.headers.get('WWW-Authenticate') ?? '', /^Basic /);
+  await assertDenied(denied, path);
   checkPrivate(denied);
-  await denied.body?.cancel();
 
   const allowed = await get(path, authorization);
   assert.equal(allowed.status, expectedStatus, `Authenticated ${path}`);
@@ -65,6 +64,8 @@ for (const [path, expectedStatus] of paths) {
   if (path === '/') {
     const html = await allowed.text();
     assert.match(html, /<meta\s+name="robots"\s+content="[^"]*noindex/);
+  } else if (path === '/robots.txt') {
+    assert((await allowed.text()).endsWith('User-agent: *\nDisallow: /\n'), 'Authenticated robots.txt must include the site crawl restriction');
   } else {
     await allowed.body?.cancel();
   }

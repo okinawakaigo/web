@@ -65,6 +65,8 @@
 
 認証済みのファイルを含む全レスポンスに `Cache-Control: private, no-store` と `X-Robots-Tag: noindex, nofollow, noarchive` をWorkerから付与します。HTTPSにはHSTSを設定します。noindexは検索登録を避ける指定で、閲覧制限はBasic認証が担当します。[Basic認証の公式実装例](https://developers.cloudflare.com/workers/examples/basic-auth/)を参照してください。
 
+Cloudflareの[managed robots.txt](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)が有効な場合、`/robots.txt` だけはWorkerの401がCloudflare生成のクローラー向け文書（200）に置き換わります。サイト本文は含まれず、Workerの認証要求・noindex・キャッシュ禁止ヘッダーは維持されます。公開後の検証では、このパスに限り自動生成マーカーと文書内容を検査します。認証後はサイト側の `Disallow: /` が含まれることも確認します。その他のページ・画像・APIは必ず未認証の401を確認し、検索登録の抑制は各レスポンスのnoindexと認証で維持します。
+
 パスワードの変更はGitHubの `BASIC_AUTH_PASSWORD` Secretを更新し、直近の `main` 用ワークフローを再実行します。Cloudflare管理画面で直接変更した値は次回CIでGitHubの値に戻るため、GitHub Secretsを管理元にします。共有を終了するときも同じ手順でパスワードを変更してください。ブラウザは認証情報を記憶するため、未認証の確認には新しいプライベートウィンドウを使用します。
 
 ## ローカルでの認証確認
