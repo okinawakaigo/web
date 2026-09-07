@@ -1,0 +1,23 @@
+---
+import Brand from '@okinawa-care/ui/Brand.astro';
+import Icon from '@okinawa-care/ui/Icon.astro';
+import { company } from '@okinawa-care/content';
+---
+<footer class="site-footer">
+  <div class="container footer-main">
+    <div><Brand /><p>〒{company.postalCode}<br />{company.address}</p></div>
+    <div class="footer-links"><a href={company.website} target="_blank" rel="noopener noreferrer">ご利用者・ご家族の方へ <Icon name="external" size={15} /></a><a href={company.instagram} target="_blank" rel="noopener noreferrer">Instagram <Icon name="external" size={15} /></a><a href="/privacy/">プライバシーポリシー</a></div>
+  </div>
+  <div class="container footer-bottom"><span>© {new Date().getFullYear()} Okinawa Care Center</span><a href="#main">ページの先頭へ ↑</a></div>
+</footer>
+<style>
+  .site-footer { background: white; padding: 64px 0 24px; }
+  .footer-main { display: flex; justify-content: space-between; gap: 32px; padding-bottom: 48px; }
+  .footer-main p { margin-top: 24px; font-size: 12px; line-height: 2; color: var(--color-muted); }
+  .footer-links { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; font-size: 12px; padding-top: 6px; }
+  .footer-links a { display: inline-flex; align-items: center; gap: 24px; text-decoration: none; }
+  .footer-links a:hover { text-decoration: underline; }
+  .footer-bottom { border-top: 1px solid var(--color-line); padding-top: 22px; display: flex; justify-content: space-between; gap: 24px; font-size: 10px; color: var(--color-muted); }
+  .footer-bottom a { text-decoration: none; }
+  @media(max-width: 600px) { .footer-main { flex-direction: column; } .site-footer { padding-bottom: 108px; } }
+</style>

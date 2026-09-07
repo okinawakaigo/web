@@ -1,0 +1,37 @@
+---
+import '@fontsource-variable/noto-sans-jp';
+import '@fontsource-variable/noto-serif-jp';
+import '@fontsource-variable/dm-sans';
+import '@okinawa-care/ui/tokens.css';
+import '@okinawa-care/ui/base.css';
+import { company } from '@okinawa-care/content';
+import { indexable } from '../config';
+interface Props { title?: string; description?: string; noindex?: boolean }
+const { title = '誰かの毎日も、あなたの毎日も、大切に。', description = '沖縄・那覇の沖縄介護センター採用サイト。訪問介護員・ケアマネジャー・相談支援専門員の仕事や、働く環境をご紹介。説明会や職場見学について、お気軽にご相談ください。', noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const canIndex = indexable && !noindex;
+const structuredData = { '@context': 'https://schema.org', '@type': 'Organization', name: company.legalName, url: Astro.site?.href, telephone: company.telephone, address: { '@type': 'PostalAddress', postalCode: company.postalCode, streetAddress: company.address, addressCountry: 'JP' }, sameAs: [company.website, company.instagram] };
+---
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#136c60" />
+    <title>{title} | 沖縄介護センター 採用サイト</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content={canIndex ? 'index,follow' : 'noindex,nofollow'} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:site_name" content="沖縄介護センター 採用サイト" />
+    <meta property="og:title" content={`${title} | 沖縄介護センター`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/og.jpg', Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')} />
+  </head>
+  <body><a class="skip-link" href="#main">本文へスキップ</a><slot /></body>
+</html>

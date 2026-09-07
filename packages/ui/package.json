@@ -1,0 +1,9 @@
+{
+  "name": "@okinawa-care/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { "./tokens.css": "./src/tokens.css", "./base.css": "./src/base.css", "./*": "./src/components/*" },
+  "peerDependencies": { "astro": "^7.3.1" },
+  "devDependencies": { "astro": "7.3.1" }
+}

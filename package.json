@@ -1,0 +1,16 @@
+{
+  "name": "okinawa-care",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.4",
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "dev": "pnpm --filter @okinawa-care/recruit dev",
+    "build": "pnpm --filter @okinawa-care/recruit build",
+    "check": "pnpm --filter @okinawa-care/recruit check && pnpm --filter @okinawa-care/edge check",
+    "test": "vitest run",
+    "preview": "pnpm build && pnpm --filter @okinawa-care/edge dev",
+    "deploy": "pnpm check && pnpm test && pnpm build && pnpm --filter @okinawa-care/edge deploy"
+  },
+  "devDependencies": { "typescript": "^5.9.3", "vitest": "^5.0.0" }
+}

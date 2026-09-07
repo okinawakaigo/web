@@ -1,0 +1,52 @@
+---
+import Brand from '@okinawa-care/ui/Brand.astro';
+import Button from '@okinawa-care/ui/Button.astro';
+const home = Astro.url.pathname === '/' ? '' : '/';
+---
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand"><Brand /><span class="recruit-label">採用サイト</span></div>
+    <nav aria-label="メインナビゲーション" class="desktop-nav">
+      <a href={`${home}#about`}>私たちについて</a><a href={`${home}#workplace`}>働く環境</a><a href={`${home}#jobs`}>仕事を知る</a>
+    </nav>
+    <Button class="header-cta" href={`${home}#reserve`}>説明会・見学の相談</Button>
+    <button class="menu-toggle" aria-controls="mobile-navigation" aria-expanded="false" hidden><span class="menu-lines" aria-hidden="true"></span><span class="menu-label">メニュー</span></button>
+  </div>
+  <nav id="mobile-navigation" class="mobile-nav" aria-label="モバイルナビゲーション" hidden>
+    <a href={`${home}#about`}>私たちについて</a><a href={`${home}#workplace`}>働く環境</a><a href={`${home}#jobs`}>仕事を知る</a><a href={`${home}#faq`}>よくある質問</a><a href={`${home}#reserve`}>説明会・見学の相談</a>
+  </nav>
+</header>
+<style>
+  .site-header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.97); border-bottom: 1px solid #edf1ed; }
+  .header-inner { min-height: 96px; display: flex; align-items: center; gap: 30px; padding-inline: clamp(24px, 3vw, 56px); max-width: 1600px; margin: auto; }
+  .header-brand { display: flex; align-items: center; gap: 22px; margin-right: auto; }
+  .recruit-label { font-size: 11px; border-left: 1px solid var(--color-line); padding-left: 22px; white-space: nowrap; }
+  .desktop-nav { display: flex; gap: 26px; }
+  .desktop-nav a { font-size: 13px; font-weight: 500; text-decoration: none; }
+  .desktop-nav a:hover { color: var(--color-primary); }
+  .menu-toggle { display: none; border: 0; background: transparent; padding: 8px; min-width: 48px; min-height: 48px; }
+  .menu-label { display: block; font-size: 10px; margin-top: 4px; }
+  .menu-lines { display: block; margin-inline: auto; width: 22px; height: 12px; border-block: 1.5px solid var(--color-primary); }
+  .menu-toggle[aria-expanded=true] .menu-lines { transform: rotate(-45deg); height: 0; border-bottom: 0; }
+  .mobile-nav { border-top: 1px solid var(--color-line); padding: 12px 24px 24px; }
+  .mobile-nav a { display: block; padding: 13px 0; text-decoration: none; border-bottom: 1px solid var(--color-line); font-size: 14px; }
+  @media(max-width: 1160px) { .recruit-label { display: none; } .header-inner { gap: 24px; } .desktop-nav { gap: 18px; } }
+  @media(max-width: 900px) { .desktop-nav { display: none; } .menu-toggle { display: block; } .header-inner { min-height: 80px; gap: 12px; } }
+  @media(max-width: 600px) { .header-inner { padding-inline: 20px; min-height: 76px; } .site-header :global(.header-cta) { display: none; } }
+</style>
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
+  const menu = document.querySelector<HTMLElement>('#mobile-navigation');
+  if (toggle && menu) {
+    toggle.hidden = false;
+    const closeMenu = () => { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); };
+    toggle.addEventListener('click', () => {
+      const opening = toggle.getAttribute('aria-expanded') !== 'true';
+      menu.hidden = !opening;
+      toggle.setAttribute('aria-expanded', String(opening));
+    });
+    menu.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && !menu.hidden) { closeMenu(); toggle.focus(); } });
+    matchMedia('(min-width: 901px)').addEventListener('change', closeMenu);
+  }
+</script>

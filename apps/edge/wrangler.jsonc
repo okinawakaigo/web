@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "okinawa-care-recruit",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-06",
+  "assets": {
+    "directory": "../recruit/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": false }
+  // Optional D1 and rate limit bindings: see docs/deployment.md.
+  // No account IDs, database IDs or production routes are assumed here.
+}

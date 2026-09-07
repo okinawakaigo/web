@@ -1,0 +1,26 @@
+:root {
+  --color-paper: #ffffff;
+  --color-ink: #203e3a;
+  --color-muted: #5c716d;
+  --color-primary: #136c60;
+  --color-primary-dark: #0d5148;
+  --color-mist: #edf5f1;
+  --color-sand: #f6f6f0;
+  --color-sun: #ecda8a;
+  --color-line: #d5e2db;
+  --font-body: 'Noto Sans JP Variable', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  --font-display: 'Noto Serif JP Variable', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  --font-latin: 'DM Sans Variable', sans-serif;
+  --space-1: .5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 3rem;
+  --space-6: 4rem;
+  --space-7: 6rem;
+  --space-8: 8rem;
+  --radius-control: 6px;
+  --radius-panel: 16px;
+  --container: 1184px;
+  --gutter: clamp(24px, 5vw, 80px);
+}

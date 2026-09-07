@@ -1,0 +1,69 @@
+---
+import { Image } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import Brand from '@okinawa-care/ui/Brand.astro';
+import { photographyShots } from '../content/photography-brief';
+---
+<Layout title="採用ページの撮影依頼メモ" description="ヒーローの写真1枚と、ページ全体で会社の雰囲気を伝えるための撮影構成案。" noindex>
+  <main id="main" class="container section photo-brief">
+    <Brand />
+    <p class="section-label">撮影依頼メモ · 2026年9月</p>
+    <h1 class="section-heading">人との関わりと、<br />いつもの仕事が見える写真。</h1>
+    <p class="intro">ヒーローは大きな写真1枚。ページを読み進めながら、仕事・同僚との関係・職員の人柄が伝わる写真を配置する方針です。以下の3場面は撮影候補で、使用枚数を3枚に限定するものではありません。</p>
+    <p class="notice">以下は構図を共有するためのAI生成ダミーです。人物・室内・制服は架空のもので、実際の職場に合わせて撮影します。</p>
+    <a href="/" class="text-link">採用ページで配置を見る <span aria-hidden="true">↗</span></a>
+    <div class="shots">
+      {photographyShots.map((photo, index) => <section class="shot" aria-labelledby={`shot-${photo.id}`}>
+        <figure><Image src={photo.src} alt={`AI生成の撮影イメージ：${photo.alt}`} width={960} height={640} widths={[480, 640, 960]} sizes="(max-width: 760px) calc(100vw - 48px), 480px" loading={index === 0 ? 'eager' : 'lazy'} format="webp" quality={82} /><figcaption>{photo.placement}</figcaption></figure>
+        <div class="shot-copy"><p class="shot-number">SHOT 0{index + 1}</p><h2 id={`shot-${photo.id}`}>{photo.title}</h2><p>{photo.purpose}</p><h3>構図</h3><p>{photo.composition}</p><h3>撮る場面</h3><p>{photo.direction}</p></div>
+      </section>)}
+    </div>
+    <section class="shared" aria-labelledby="shared-title">
+      <h2 id="shared-title">ページ全体でそろえる撮り方</h2>
+      <dl>
+        <div><dt>光と色</dt><dd>柔らかな自然光。肌の色を自然に残し、写真全体の明るさ・色温度をそろえる。強い美肌加工やオレンジ色のフィルターは使わない。</dd></div>
+        <div><dt>人物と場所</dt><dd>普段の制服・事務所・道具を使用。カメラ目線より、会話や作業中の表情を。出演者は実際の職員構成に合わせ、ダミーの年齢・性別・服の色を再現する必要はありません。</dd></div>
+        <div><dt>切り抜きの余白</dt><dd>ヒーローはPCで縦長に表示するため、縦横両方の構図を撮影。本文用は横構図を基本に、同じ場面で「少し引き」と「少し寄り」を残す。顔と重要な手元の周囲に余白を確保する。</dd></div>
+        <div><dt>納品</dt><dd>長辺3,000px以上の高画質JPEG・sRGB。文字・ロゴ・角丸加工なしの元構図で、各場面3〜5候補。Web用の軽量化と切り抜きは実装側で行います。</dd></div>
+        <div><dt>撮影前の準備</dt><dd>出演者の掲載同意を確認し、利用者さま役が必要なら協力者による再現を調整。資料・画面・名札は個人情報が映らない撮影用のものを用意します。</dd></div>
+      </dl>
+    </section>
+    <p class="brief-footer">主写真は職員の自然な表情と職場の空間が伝わる候補を複数撮影。本文用には、支援・相談・準備・職員紹介など内容に合う場面を残してください。現在の採用ページは当初の1枚ヒーローに戻し、実写素材に合わせて本文の写真配置を詰めます。</p>
+  </main>
+</Layout>
+<style>
+  .photo-brief { max-width: 1060px; }
+  .section-label { margin-top: 40px; }
+  .intro { max-width: 750px; margin-top: 22px; }
+  .notice { margin-block: 20px 14px; color: var(--color-muted); font-size: 13px; }
+  .shots { margin-top: 48px; }
+  .shot { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding-block: 32px; border-top: 1px solid var(--color-line); align-items: start; }
+  figure img { width: 100%; height: auto; border-radius: 6px; }
+  figcaption { font-size: 12px; color: var(--color-muted); margin-top: 10px; }
+  .shot-number { font: 500 12px var(--font-latin); color: var(--color-primary); letter-spacing: .12em; margin-bottom: 12px; }
+  h2 { font: 500 23px/1.6 var(--font-display); margin-bottom: 16px; }
+  h3 { font-size: 13px; margin-top: 16px; }
+  .shot-copy > p:not(.shot-number), dd { font-size: 14px; line-height: 2; }
+  .shared { margin-top: 24px; padding: 32px; background: var(--color-sand); border-radius: 8px; }
+  dl { margin: 0; }
+  dl > div { display: grid; grid-template-columns: 125px 1fr; gap: 24px; padding-block: 16px; border-top: 1px solid var(--color-line); }
+  dt { font-size: 14px; font-weight: 500; }
+  dd { margin: 0; }
+  .brief-footer { font-size: 13px; color: var(--color-muted); margin-top: 24px; }
+  @media(max-width: 760px) {
+    .shot { grid-template-columns: 1fr; gap: 24px; }
+    .shared { padding: 24px; }
+    dl > div { grid-template-columns: 1fr; gap: 6px; }
+  }
+  @media print {
+    .photo-brief { width: 100%; padding: 0; }
+    .section-label { margin-top: 20px; }
+    .section-heading { font-size: 28px; }
+    .intro { font-size: 13px; }
+    .text-link { display: none; }
+    .shot { break-inside: avoid; grid-template-columns: 1fr 1fr; gap: 24px; padding-block: 24px; }
+    .shot-copy > p:not(.shot-number), dd { font-size: 11px; }
+    .shot h2 { font-size: 18px; }
+    .shared { break-inside: avoid; padding: 20px; }
+  }
+</style>
