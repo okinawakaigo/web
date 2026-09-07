@@ -6,11 +6,11 @@
 
 `.github/workflows/website-ci.yml` で、次の順に実行します。
 
-1. PRでは型チェック・テスト・静的ビルド・Wranglerドライランを実行します。
+1. PRではスタイル検査・型チェック・テスト・静的ビルド・Wranglerドライランを実行します。
 2. `main` へのpush（PRマージを含む）では同じ検証を実行し、すべて成功した場合だけ `pnpm --filter @okinawa-care/edge deploy` を実行します。
 3. `okinawa-care-recruit` Workerと `apps/recruit/dist` の静的ファイルをデプロイします。`archive/`、仕様資料、リポジトリ全体は配信しません。
 
-`main` の実行対象は `apps/**`、`packages/**`、`tests/**`、ルートの依存・Node設定とこのワークフローです。`archive/**` や `docs/**`、READMEだけの変更ではデプロイしません。`main` の処理は同時実行を避け、実行中のデプロイは中断しません。PRの古い検証は新しいpushで中断します。
+`main` の実行対象は `apps/**`、`packages/**`、`tests/**`、ルートの依存・Node設定、`stylelint.config.mjs` とこのワークフローです。`archive/**` や `docs/**`、READMEだけの変更ではデプロイしません。`main` の処理は同時実行を避け、実行中のデプロイは中断しません。PRの古い検証は新しいpushで中断します。
 
 ### 最初に設定するSecret
 

@@ -3,7 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": { "./tokens.css": "./src/tokens.css", "./base.css": "./src/base.css", "./*": "./src/components/*" },
-  "peerDependencies": { "astro": "^7.3.1" },
-  "devDependencies": { "astro": "7.3.1" }
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./base.css": "./src/base.css",
+    "./*": "./src/components/*",
+    "./styles.css": "./src/styles.css"
+  },
+  "peerDependencies": {
+    "astro": "^7.3.1",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "astro": "7.3.1",
+    "tailwindcss": "4.3.3"
+  }
 }

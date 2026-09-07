@@ -1,21 +1,62 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { company } from '@okinawa-care/content';
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { company } from "@okinawa-care/content";
 ---
+
 <Layout title="プライバシーポリシー">
   <Header />
-  <main id="main" class="container section policy">
-    <p class="section-label">採用サイトの情報の取り扱い</p><h1 class="section-heading">プライバシーポリシー</h1>
-    <p>有限会社 沖縄介護センター（以下「当社」）は、採用に関するお問い合わせにおいて、個人情報を適切に取り扱います。</p>
-    <h2>お問い合わせでお預かりする情報</h2><p>採用のご相談や説明会・見学の予約に際し、お名前、ご連絡先、ご希望の職種などをお伺いする場合があります。これらの情報は、ご連絡、日程調整、採用に関するご案内のために使用します。</p>
-    <h2>サイトの利用状況の計測</h2><p>当サイトでは、改善のため、ページの表示、相談案内への到達、予約フォームへの移動を件数として集計する場合があります。集計するのは日付、入口となった媒体・掲載場所、操作の種類です。Cookieや広告識別子は使用せず、氏名、メールアドレス、IPアドレス、端末情報を計測データとして保存しません。フォームへの移動は、実際の予約数とは区別します。</p>
-    <p>サイトの配信にはCloudflareを利用します。通信の処理に必要な情報は、サービス提供事業者の方針に従って処理されます。</p>
-    <h2>外部サービス</h2><p>予約フォームを利用する場合、Googleフォームの画面で氏名・連絡先等を入力していただきます。InstagramやGoogleマップを含め、リンク先での情報の取り扱いは各サービスの方針をご確認ください。</p>
-    <h2>管理とお問い合わせ</h2><p>お預かりした情報は利用目的に必要な範囲で管理します。個人情報の取り扱いや、開示・訂正・削除等のご相談は、下記窓口へご連絡ください。</p>
-    <address>{company.legalName}<br />〒{company.postalCode} {company.address}<br />電話：<a href={company.phoneHref}>{company.telephone}</a></address>
+  <main id="main" class="content-container section policy">
+    <p class="section-label">採用サイトの情報の取り扱い</p><h1
+      class="section-heading"
+    >
+      プライバシーポリシー
+    </h1>
+    <p>
+      有限会社
+      沖縄介護センター（以下「当社」）は、採用に関するお問い合わせにおいて、個人情報を適切に取り扱います。
+    </p>
+    <h2>お問い合わせでお預かりする情報</h2><p>
+      採用のご相談や説明会・見学の予約に際し、お名前、ご連絡先、ご希望の職種などをお伺いする場合があります。これらの情報は、ご連絡、日程調整、採用に関するご案内のために使用します。
+    </p>
+    <h2>サイトの利用状況の計測</h2><p>
+      当サイトでは、改善のため、ページの表示、相談案内への到達、予約フォームへの移動を件数として集計する場合があります。集計するのは日付、入口となった媒体・掲載場所、操作の種類です。Cookieや広告識別子は使用せず、氏名、メールアドレス、IPアドレス、端末情報を計測データとして保存しません。フォームへの移動は、実際の予約数とは区別します。
+    </p>
+    <p>
+      サイトの配信にはCloudflareを利用します。通信の処理に必要な情報は、サービス提供事業者の方針に従って処理されます。
+    </p>
+    <h2>外部サービス</h2><p>
+      予約フォームを利用する場合、Googleフォームの画面で氏名・連絡先等を入力していただきます。InstagramやGoogleマップを含め、リンク先での情報の取り扱いは各サービスの方針をご確認ください。
+    </p>
+    <h2>管理とお問い合わせ</h2><p>
+      お預かりした情報は利用目的に必要な範囲で管理します。個人情報の取り扱いや、開示・訂正・削除等のご相談は、下記窓口へご連絡ください。
+    </p>
+    <address>
+      {company.legalName}<br />〒{company.postalCode}
+      {company.address}<br />電話：<a href={company.phoneHref}
+        >{company.telephone}</a>
+    </address>
     <a href="/" class="text-link">採用サイトへ戻る</a>
   </main><Footer />
 </Layout>
-<style>.policy { max-width: 800px; } .policy > p { font-size: 14px; margin-block: 28px; } .policy h2 { font-size: 20px; margin-top: 44px; } .policy address { font-size: 14px; font-style: normal; margin-block: 24px; } .policy .text-link { margin-top: 30px; }</style>
+<style>
+  @reference "@okinawa-care/ui/styles.css";
+  @layer components {
+    .policy {
+      @apply max-w-reading;
+    }
+    .policy > p {
+      @apply text-body my-7;
+    }
+    .policy h2 {
+      @apply text-title mt-11;
+    }
+    .policy address {
+      @apply text-body not-italic my-6;
+    }
+    .policy .text-link {
+      @apply mt-8;
+    }
+  }
+</style>

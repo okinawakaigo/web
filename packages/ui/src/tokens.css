@@ -1,4 +1,6 @@
-:root {
+/* Shared design values. See docs/styling.md for roles and allowed exceptions. */
+@theme static {
+  --color-*: initial;
   --color-paper: #ffffff;
   --color-ink: #203e3a;
   --color-muted: #5c716d;
@@ -8,19 +10,83 @@
   --color-sand: #f6f6f0;
   --color-sun: #ecda8a;
   --color-line: #d5e2db;
-  --font-body: 'Noto Sans JP Variable', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-  --font-display: 'Noto Serif JP Variable', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-  --font-latin: 'DM Sans Variable', sans-serif;
-  --space-1: .5rem;
-  --space-2: 1rem;
-  --space-3: 1.5rem;
-  --space-4: 2rem;
-  --space-5: 3rem;
-  --space-6: 4rem;
-  --space-7: 6rem;
-  --space-8: 8rem;
-  --radius-control: 6px;
-  --radius-panel: 16px;
-  --container: 1184px;
-  --gutter: clamp(24px, 5vw, 80px);
+  --color-line-strong: #b8d0c3;
+  --color-control-border: #9aac9f;
+  --color-inverse-muted: #e2eee8;
+  --color-inverse-line: #39746b;
+  --color-image-placeholder: #c8d8b9;
+  --color-error: #a53232;
+
+  --font-*: initial;
+  --font-body:
+    "Noto Sans JP Variable", "Hiragino Kaku Gothic ProN", "Yu Gothic",
+    sans-serif;
+  --font-display:
+    "Noto Serif JP Variable", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-latin: "DM Sans Variable", sans-serif;
+
+  --text-*: initial;
+  --text-micro: 0.625rem;
+  --text-caption: 0.75rem;
+  --text-label: 0.8125rem;
+  --text-body: 0.875rem;
+  --text-base: 1rem;
+  --text-subtitle: 1.125rem;
+  --text-title: 1.25rem;
+  --text-subheading: 1.5rem;
+  --text-headline: 1.75rem;
+  --text-section: clamp(1.75rem, 3vw, 2.5rem);
+  --text-hero: clamp(2.25rem, 4vw, 3.5625rem);
+  --text-hero-laptop: clamp(2rem, 3.82vw, 2.625rem);
+  --text-hero-mobile: clamp(2.25rem, 6vw, 2.9375rem);
+  --text-feature: clamp(1.75rem, 3vw, 2.375rem);
+  --text-reserve: clamp(2.375rem, 4vw, 3.25rem);
+  --text-reserve-mobile: 2.375rem;
+  --text-account: clamp(1.75rem, 3vw, 2.375rem);
+
+  --leading-*: initial;
+  --leading-compact: 1.6;
+  --leading-heading: 1.7;
+  --leading-body: 1.95;
+  --leading-prose: 2.2;
+  --tracking-*: initial;
+  --tracking-copy: 0.035em;
+  --tracking-heading: 0.045em;
+  --tracking-wide: 0.07em;
+  --tracking-caption: 0.1em;
+
+  /* One spacing unit is 4px. Prefer integral multiples in utilities. */
+  --spacing: 0.25rem;
+  --spacing-control: 3.5rem;
+  --spacing-control-compact: 3rem;
+  --spacing-gutter: clamp(1.5rem, 5vw, 5rem);
+  --spacing-section: clamp(4.75rem, 8vw, 7.5rem);
+  --spacing-header-gutter: clamp(1.5rem, 3vw, 3.5rem);
+  --spacing-panel: clamp(1.75rem, 3.5vw, 3rem);
+
+  --radius-*: initial;
+  --radius-small: 0.25rem;
+  --radius-control: 0.375rem;
+  --radius-card: 0.5rem;
+  --radius-panel: 1rem;
+
+  --container-*: initial;
+  --container-content: 74rem;
+  --container-wide: 100rem;
+  --container-reading: 50rem;
+  --container-guide: 62.5rem;
+  --container-brief: 66.25rem;
+  --container-prose: 46.875rem;
+  --container-intro: 43.75rem;
+  --container-description: 40.625rem;
+  --container-form: 33.75rem;
+
+  --breakpoint-*: initial;
+  --breakpoint-mini: 22.5rem;
+  --breakpoint-xs: 25rem;
+  --breakpoint-sm: 37.5rem;
+  --breakpoint-md: 47.5rem;
+  --breakpoint-nav: 56.25rem;
+  --breakpoint-lg: 72rem;
+  --breakpoint-wide: 100rem;
 }

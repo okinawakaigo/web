@@ -28,6 +28,8 @@ Cloudflare Workers Static Assetsは静的ファイルとAPIを一緒に配信で
 
 共通化は、実際に再利用する `ui` と `content` に限定。Turborepoや空のサービス、認証、CMSは初版には導入しません。pnpm workspaceで独立したアプリを追加でき、必要になればビルドキャッシュも追加できます。
 
+スタイルにはTailwind CSS 4のViteプラグインを使用します。色・書体・文字サイズ・4px単位の余白・ブレークポイントを `packages/ui/src/tokens.css` に定義し、全ページと共通UIが同じテーマを参照します。ボタンと選択欄を共有し、Stylelintで値の直接指定を検査します。具体的な使い分けと写真配置の例外は [スタイルの統一ルール](styling.md) を参照してください。
+
 ## デザイン方針
 
 | 要素 | 方針 |

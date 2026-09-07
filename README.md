@@ -1,6 +1,6 @@
 # 沖縄介護センター Web基盤
 
-採用ページを起点に、企業サイトと将来のサービスへ展開するpnpmモノレポ。フロントエンドはAstro＋TypeScript、配信・APIはCloudflare Workers＋TypeScriptです。
+採用ページを起点に、企業サイトと将来のサービスへ展開するpnpmモノレポ。フロントエンドはAstro＋TypeScript＋Tailwind CSS 4、配信・APIはCloudflare Workers＋TypeScriptです。
 
 [jnlmyz/junabel PR #2](https://github.com/jnlmyz/junabel/pull/2) の `nursing/website` をこのリポジトリのルートへ移行しました。旧HTMLサイト・仕様資料・開発設定は [`archive/legacy-2026-09-07/`](archive/legacy-2026-09-07/) に保存しています。移行元のコミットと構成の違いは [移行記録](docs/migration.md) を参照してください。
 
@@ -19,7 +19,8 @@ pnpm dev
 採用ページは `http://127.0.0.1:4321/`、デザインガイドは `/design/`、画像付きの撮影依頼メモは `/photo-brief/`。この環境のAstro 7のdevサーバーはバックグラウンドで継続します。終了は `pnpm --filter @okinawa-care/recruit exec astro dev stop`。
 
 ```sh
-pnpm check      # AstroとWorkerの型チェック
+pnpm lint:styles # 共通テーマ・余白ルールの検査
+pnpm check      # スタイル検査とAstro・Workerの型チェック
 pnpm test       # 流入元・フォームURL・計測APIの検証
 pnpm build      # 静的HTMLと最適化した画像を生成
 pnpm preview    # ビルド後、Workersで配信 http://127.0.0.1:8787
@@ -48,7 +49,8 @@ pnpm preview    # ビルド後、Workersで配信 http://127.0.0.1:8787
 - Googleフォームで説明会・見学の相談を受付。希望職種・次のステップ・流入元を引き継ぐ予約導線
 - Cookie・ユーザーIDを使用しない日次件数集計API。初期状態は無効
 - canonical、OGP、sitemap、robots、プライバシーページ、404、ローカルフォント、WebP画像
-- `/design/` で実装と同じコンポーネント・トークンを確認できるデザインガイド
+- Tailwindの共通テーマで色・文字サイズ・4px単位の余白を統一。ボタン・選択欄を共有し、Stylelintでルールを検査。[スタイルの統一ルール](docs/styling.md)を参照
+- `/design/` で実装と同じテーマ色・コンポーネント・無効状態を確認できるデザインガイド
 - ヒーローは当初の大きな写真1枚。ページ全体の実写撮影に向けた、画像付きの撮影依頼メモ `/photo-brief/`
 - GitHub Actionsによる型チェック・テスト・ビルド・Wranglerドライラン。`main` への対象ファイルのpush時は成功後にWorkersへ自動デプロイ（APIトークンの設定が必要）
 

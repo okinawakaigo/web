@@ -1,0 +1,4 @@
+@import "@okinawa-care/ui/styles.css";
+
+/* Scan the current application and the UI package, excluding archives and docs. */
+@source '../';
