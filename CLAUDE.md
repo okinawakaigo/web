@@ -30,7 +30,7 @@ Worker・配信ヘッダー・404を確認するときは `pnpm preview`。GitHu
 
 - 説明会・見学相談を入口にする。受付はGoogleフォームに統一し、採用の電話リンクは設けない
 - フォーム未設定時は「受付準備中」と表示し、入力・送信を無効にする。個人情報はサイトや計測DBで受け付けない
-- 公開先は `https://recruit.okinawakaigo.com/`。Cloudflare Accessで許可メールを制限し、設定確認後に `RECRUIT_ACCESS_READY=true` を登録する。`workers.dev`・プレビューURLは無効にする
+- 公開先は `https://recruit.okinawakaigo.com/`。WorkerのBasic認証で全ページ・画像・APIを保護する。ID・パスワードはGitHub Actions Secretsからデプロイ時に登録し、未設定なら配信しない。`workers.dev`・プレビューURLは無効にする
 - レビュー中はCIでnoindexを固定し、静的配信・APIにも `X-Robots-Tag` を付ける。計測は初期状態で無効。未確認の給与・勤務条件・職員の声は作らない
 - Astroで静的HTMLを生成し、操作に必要な箇所だけTypeScriptを使う。共通化は実際に再利用するUIとデータに限定する
 - スタイルはTailwind CSS 4と `packages/ui/src/tokens.css` に統一する。色・文字・余白のルールは [docs/styling.md](docs/styling.md) に従い、ボタン・選択欄は共通部品を使う。`pnpm check` でStylelintも実行する

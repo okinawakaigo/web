@@ -21,19 +21,19 @@ pnpm dev
 ```sh
 pnpm lint:styles # 共通テーマ・余白ルールの検査
 pnpm check      # スタイル検査とAstro・Workerの型チェック
-pnpm test       # 流入元・フォームURL・計測APIの検証
+pnpm test       # 認証・流入元・フォームURL・計測APIの検証
 pnpm build      # 静的HTMLと最適化した画像を生成
 pnpm preview    # ビルド後、Workersで配信 http://127.0.0.1:8787
 ```
 
-`pnpm dev` は画面開発用です。API・配信ヘッダー・404は `pnpm preview` で確認します。別のプロジェクトの依存関係やデプロイ設定には依存しません。
+`pnpm dev` は画面開発用です。認証・API・配信ヘッダー・404は `cp apps/edge/.dev.vars.example apps/edge/.dev.vars` でローカル専用認証情報を用意し、`pnpm preview` で確認します。認証ダイアログには `.dev.vars` のID・パスワードを入力します。別のプロジェクトの依存関係やデプロイ設定には依存しません。
 
 ## 構成
 
 | 場所 | 責務 |
 | --- | --- |
 | `apps/recruit` | 採用ページ、問い合わせ導線、SEO、レスポンシブ表示 |
-| `apps/edge` | 静的ファイル配信、件数集計API、D1マイグレーション |
+| `apps/edge` | Basic認証、静的ファイル配信、件数集計API、D1マイグレーション |
 | `packages/ui` | 色・文字・余白、Brand・Button・Iconの共通コンポーネント |
 | `packages/content` | 会社情報、職種、FAQ、流入元の型とフォームURL生成 |
 | `tests` | データを扱う境界のテスト |
@@ -52,7 +52,7 @@ pnpm preview    # ビルド後、Workersで配信 http://127.0.0.1:8787
 - Tailwindの共通テーマで色・文字サイズ・4px単位の余白を統一。ボタン・選択欄を共有し、Stylelintでルールを検査。[スタイルの統一ルール](docs/styling.md)を参照
 - `/design/` で実装と同じテーマ色・コンポーネント・無効状態を確認できるデザインガイド
 - ヒーローは当初の大きな写真1枚。ページ全体の実写撮影に向けた、画像付きの撮影依頼メモ `/photo-brief/`
-- GitHub Actionsによる型チェック・テスト・ビルド・Wranglerドライラン。`main` への対象ファイルのpush時は成功後にWorkersへ自動デプロイ（APIトークンの設定が必要）
+- GitHub Actionsによる型チェック・テスト・ビルド・Wranglerドライラン。`main` への対象ファイルのpush時は成功後にWorkersへ自動デプロイ（APIトークンと閲覧用ID・パスワードのSecretsが必要）
 
 ## 現在の公開準備状況
 
@@ -62,8 +62,8 @@ Webページはローカルで動作します。Cloudflareへの公開、DNS変�
 - **給与等は未確認**：過去の議事録に誤記の記録があるため転載していません。現状は条件を問い合わせる表示です。確定後、職種データへ募集条件を追加してください。
 - **人物写真**：ヒーローは当初のイメージ写真を仮使用。撮影依頼ページにはAI生成の参考画像を明示して掲載しています。[撮影依頼メモ](docs/photography-brief.md)に沿って実写を撮影し、ヒーローと本文の写真を整えます。
 - **ロゴ**：新しいマークの提案。既存の正式ロゴの改変ではありません。
-- **限定公開**：公開先は `https://recruit.okinawakaigo.com/`。Cloudflare Accessで許可メールだけが閲覧できるよう設定してから公開します。`workers.dev` とプレビューURLは無効です。
-- **検索登録**：CIでnoindexを固定し、HTTPレスポンスにも `X-Robots-Tag` を付けています。Access設定の確認後に `RECRUIT_ACCESS_READY=true` を登録するまで、CIのデプロイは停止します。
+- **限定公開**：公開先は `https://recruit.okinawakaigo.com/`。共有ID・パスワードのBasic認証で全ページ・画像・APIを保護します。認証情報が未設定なら503を返します。`workers.dev` とプレビューURLは無効です。
+- **検索登録**：CIでnoindexを固定し、認証画面を含む全レスポンスに `X-Robots-Tag` と `Cache-Control: private, no-store` を付けています。デプロイにはGitHub Secretsの `BASIC_AUTH_USERNAME` と `BASIC_AUTH_PASSWORD` が必要です。
 
 運用手順は [deployment.md](docs/deployment.md)、設計判断は [architecture.md](docs/architecture.md)、素材・原稿の確認箇所は [content-sources.md](docs/content-sources.md) を参照してください。
 

@@ -1,16 +1,17 @@
 import { eventNames, readAttribution } from '@okinawa-care/content/attribution';
+import { requireBasicAuth, type BasicAuthEnv } from './basic-auth';
+import { privateResponse } from './response-headers';
 
-export interface Env {
+export interface Env extends BasicAuthEnv {
   ASSETS: Fetcher;
   METRICS?: D1Database;
   METRICS_RATE_LIMITER?: RateLimit;
 }
 
-const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex, nofollow, noarchive' };
-const reply = (status: number) => new Response(null, { status, headers });
+const reply = (status: number) => new Response(null, { status });
 
 async function recordEvent(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return new Response(null, { status: 405, headers: { ...headers, Allow: 'POST' } });
+  if (request.method !== 'POST') return new Response(null, { status: 405, headers: { Allow: 'POST' } });
   if (request.headers.get('Origin') !== new URL(request.url).origin) return reply(403);
   if (request.headers.get('Content-Type')?.split(';')[0]?.trim() !== 'application/json') return reply(415);
   if (Number(request.headers.get('Content-Length')) > 512) return reply(413);
@@ -53,14 +54,29 @@ async function recordEvent(request: Request, env: Env): Promise<Response> {
   return reply(204);
 }
 
+async function serve(request: Request, env: Env, url: URL): Promise<Response> {
+  // Local previews still require credentials, but may use loopback HTTP.
+  if (url.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+    const secureURL = new URL(url);
+    secureURL.protocol = 'https:';
+    return new Response(null, { status: 308, headers: { Location: secureURL.href } });
+  }
+  const denied = requireBasicAuth(request, env);
+  if (denied) return denied;
+
+  if (url.pathname === '/api/health') return Response.json({ status: 'ok' });
+  if (url.pathname === '/api/events') {
+    try { return await recordEvent(request, env); } catch { return reply(503); }
+  }
+  if (url.pathname.startsWith('/api/')) return reply(404);
+  const assetRequest = new Request(request);
+  assetRequest.headers.delete('Authorization');
+  return env.ASSETS.fetch(assetRequest);
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const pathname = new URL(request.url).pathname;
-    if (pathname === '/api/health') return Response.json({ status: 'ok' }, { headers });
-    if (pathname === '/api/events') {
-      try { return await recordEvent(request, env); } catch { return reply(503); }
-    }
-    if (pathname.startsWith('/api/')) return reply(404);
-    return env.ASSETS.fetch(request);
+    const url = new URL(request.url);
+    return privateResponse(await serve(request, env, url), url);
   },
 } satisfies ExportedHandler<Env>;

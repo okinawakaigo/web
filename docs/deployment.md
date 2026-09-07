@@ -9,6 +9,7 @@
 1. PRではスタイル検査・型チェック・テスト・静的ビルド・Wranglerドライランを実行します。
 2. `main` へのpush（PRマージを含む）では同じ検証を実行し、すべて成功した場合だけ `pnpm --filter @okinawa-care/edge deploy` を実行します。
 3. `okinawa-care-recruit` Workerと `apps/recruit/dist` の静的ファイルをデプロイします。`archive/`、仕様資料、リポジトリ全体は配信しません。
+4. 公開URLで未認証・誤認証の拒否、正しい認証でのページ・画像・CSS・フォント・APIの応答、noindex・キャッシュ禁止・HTTPSへの転送を検証します。認証情報はログに出しません。
 
 `main` の実行対象は `apps/**`、`packages/**`、`tests/**`、ルートの依存・Node設定、`stylelint.config.mjs` とこのワークフローです。`archive/**` や `docs/**`、READMEだけの変更ではデプロイしません。`main` の処理は同時実行を避け、実行中のデプロイは中断しません。PRの古い検証は新しいpushで中断します。
 
@@ -19,8 +20,12 @@
 | 名前 | 値 |
 | --- | --- |
 | `CLOUDFLARE_API_TOKEN` | 対象アカウントのWorkerをデプロイできるAPIトークン |
+| `BASIC_AUTH_USERNAME` | 閲覧用ID。例：`recruit`。半角英数字で始まる1〜64文字（英数字・`.`・`_`・`@`・`-`） |
+| `BASIC_AUTH_PASSWORD` | パスワードマネージャー等で生成した16〜256文字のランダムなパスワード。改行・制御文字は不可 |
 
 トークンには対象アカウントの `Workers Scripts: Edit` を設定します。[Custom Domainの接続API](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/update/)もこの権限を使用します。ゾーンは `wrangler.jsonc` の `zone_id` で指定しています。Account IDはWranglerの設定から取得するため、別途Secretに登録する必要はありません。トークンはデプロイステップだけに渡します。未設定の場合はエラーを表示して停止します。
+
+閲覧用ID・パスワードも **Secrets** に登録し、Variables・ソースコード・`PUBLIC_*`には入れません。CIは形式を検証し、権限を600にした一時JSONファイルから `wrangler deploy --secrets-file` でコードと一緒にWorker Secretsへ登録します。一時ファイルは終了時に削除します。初回も認証情報とコードを同じバージョンで公開するため、Cloudflare管理画面でWorkerを先に作る必要はありません。[Secretsの公式手順](https://developers.cloudflare.com/workers/configuration/secrets/)を参照してください。
 
 ### ビルド時のVariables
 
@@ -36,29 +41,40 @@
 
 その他のVariablesは `pnpm build` 時に取り込まれます。設定を変えただけでは再デプロイされないため、`main` の対象ファイルを更新してpushするか、直近の `main` 用ワークフローを再実行します。フォームのURLやentry IDの詳細は後述の「Googleフォーム」を参照してください。
 
-配信先は `https://recruit.okinawakaigo.com/` です。`workers_dev` と `preview_urls` を `false` に固定し、Accessの対象外となる直接アクセス経路を無効にしています。Workers Buildsを別途接続すると二重にデプロイされるため、このGitHub Actionsを使う場合は接続不要です。
+配信先は `https://recruit.okinawakaigo.com/` です。`workers_dev` と `preview_urls` を `false` に固定し、公開URLを独自ドメインに限定しています。Workers Buildsを別途接続すると二重にデプロイされるため、このGitHub Actionsを使う場合は接続不要です。
 
-## メール認証による限定公開
+## Basic認証による限定公開
 
-閲覧制限はCloudflare AccessのSelf-hosted applicationで行います。設定対象は `recruit.okinawakaigo.com` の全パスです。noindexは検索登録を避ける指定であり、閲覧制限はAccessが担当します。
+閲覧制限はWorkerのBasic認証で行います。共有IDとパスワードを知る人が閲覧できる方式で、メールアドレスの本人確認は行いません。Cloudflare Zero Trustの登録は不要です。
 
-1. 対象アカウントのCloudflare Zero Trustを有効化します。チーム名・プラン選択などの初期設定が必要な場合はアカウント管理者が設定します。
-2. Access controls → ApplicationsからSelf-hosted applicationを追加し、公開ホスト名を `recruit.okinawakaigo.com` に設定します。パスは空にして全ページ・画像・APIを対象にします。
-3. 認証方法はメールのOne-time PINを有効にします。
-4. AllowポリシーのInclude条件で、承認されたメールアドレスを `Emails` に指定します。メールドメインで許可するときは `Emails ending in` を使います。`Everyone` や認証方法だけを許可条件にしません。
-5. Accessアプリと許可ポリシーが保存できたことを確認してから、GitHub Actions Variable `RECRUIT_ACCESS_READY` を `true` にします。この値は初期設定完了の確認用で、Accessポリシーそのものではありません。未設定の場合、CIはデプロイ前に停止します。
-6. デプロイ後、未認証のHTTPSアクセスがAccessのログイン画面へ移ることと、承認済みメールで認証できることを確認します。HTTPアクセスも確認し、HTTPSの認証画面へ転送される設定にします。
+1. 上記3件のGitHub Actions Secretsを登録します。
+2. PRの検証成功を確認してマージします。`main` のCIがWorker・認証情報・静的ファイルをまとめてデプロイし、独自ドメインを接続します。
+3. `https://recruit.okinawakaigo.com/` を開き、ブラウザの認証ダイアログに閲覧用ID・パスワードを入力します。
+4. 未認証・誤ったパスワードではトップ・画像・CSS・APIが401、正しい認証ではサイトが表示されることを確認します。HTTPは同じパス・クエリーのHTTPSへ転送します。
 
-初回確認時（2026-09-07）はAccessが未有効で、公開先ドメインにWorkerは接続されていません。許可メールの確定・Access初期設定・保存済みポリシーの確認が完了するまでは `RECRUIT_ACCESS_READY` を設定しません。
+`assets.run_worker_first=true` により、全ページ・画像・CSS・フォント・APIで配信前に認証します。認証情報が欠けたり形式が不正だったりする場合は503を返し、ファイルもAPIも配信しません。IDとパスワードを合わせて固定長にハッシュ化し、一定時間で比較するAPIで照合します。認証ヘッダーは静的配信へ引き継ぎません。
 
-[Cloudflare Accessの公式手順](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/)を参照してください。
+認証済みのファイルを含む全レスポンスに `Cache-Control: private, no-store` と `X-Robots-Tag: noindex, nofollow, noarchive` をWorkerから付与します。HTTPSにはHSTSを設定します。noindexは検索登録を避ける指定で、閲覧制限はBasic認証が担当します。[Basic認証の公式実装例](https://developers.cloudflare.com/workers/examples/basic-auth/)を参照してください。
+
+パスワードの変更はGitHubの `BASIC_AUTH_PASSWORD` Secretを更新し、直近の `main` 用ワークフローを再実行します。Cloudflare管理画面で直接変更した値は次回CIでGitHubの値に戻るため、GitHub Secretsを管理元にします。共有を終了するときも同じ手順でパスワードを変更してください。ブラウザは認証情報を記憶するため、未認証の確認には新しいプライベートウィンドウを使用します。
+
+## ローカルでの認証確認
+
+`pnpm dev` は認証なしの画面開発用です。Workerを含めて確認する場合は、次のローカル専用設定を作成します。
+
+```sh
+cp apps/edge/.dev.vars.example apps/edge/.dev.vars
+pnpm preview
+```
+
+`http://127.0.0.1:8787/` を開き、`.dev.vars` のID・パスワードを入力します。`.dev.vars` はGit管理対象外で、サンプルの認証情報を本番で使用しません。ループバックHTTPでも認証は必須です。
 
 ## ページの設定
 
 `apps/recruit/.env.example` を同じディレクトリの `.env` にコピーします。これらの `PUBLIC_*` はビルド時に埋め込まれる公開情報です。秘密情報は入れないでください。
 
 - `PUBLIC_SITE_URL=https://recruit.okinawakaigo.com`：canonical、OGP、サイトマップの基準URL。
-- `PUBLIC_SITE_INDEXABLE=false`：レビュー中はnoindex。CIでも `false` に固定し、静的配信とAPIに `X-Robots-Tag: noindex, nofollow, noarchive` を付けています。検索登録を許可する際は、CIの固定値、`apps/recruit/public/_headers`、`apps/edge/src/index.ts` をあわせて見直します。
+- `PUBLIC_SITE_INDEXABLE=false`：レビュー中はnoindex。CIでも `false` に固定し、全レスポンスに `X-Robots-Tag: noindex, nofollow, noarchive` を付けています。一般公開の際はCIの固定値、`apps/edge/src/response-headers.ts` のnoindex・キャッシュ設定とBasic認証をあわせて見直します。
 - `PUBLIC_ANALYTICS_ENABLED=false`：D1・Rate Limiterを設定するまで無効。
 
 企業サイトを同一ドメインに追加する際はルーティングとcanonicalを再設計します。既存サイトのDNS・メール設定は、このサイトの公開と一括変更しないでください。
@@ -160,14 +176,14 @@ pnpm --filter @okinawa-care/edge exec wrangler deploy --dry-run
 pnpm preview
 ```
 
-`http://127.0.0.1:8787/` で画面、`/api/health` でWorkerを確認できます。最後に、対象アカウントを確認したうえで公開します。
+上記のローカル認証設定を作成してから、`http://127.0.0.1:8787/` で画面、`/api/health` でWorkerを確認できます。通常の公開はGitHub Actionsを使います。手動デプロイが必要な場合は、対象アカウントとWorker Secretsが登録済みであることを確認します。
 
 ```sh
 pnpm --filter @okinawa-care/edge exec wrangler whoami
 pnpm deploy
 ```
 
-独自ドメインは `wrangler.jsonc` の `routes` に設定済みです。Cloudflare Accessによる保護を先に設定してからデプロイします。Custom Domainの接続に伴うDNS・証明書はCloudflare Workersが管理します。既存の同名レコードがある場合は、用途を確認してから切り替えます。
+独自ドメインは `wrangler.jsonc` の `routes` に設定済みです。Custom Domainの接続に伴うDNS・証明書はCloudflare Workersが管理します。既存の同名レコードがある場合は、用途を確認してから切り替えます。手動デプロイは既存のWorker Secretsを維持しますが、未登録なら503になるため、初回はGitHub Actionsを使用してください。
 
 Cloudflare Workers Buildsを使用する場合、接続先は `okinawakaigo/web`、ルートディレクトリはリポジトリのルート（`/`）、ビルドコマンドは `pnpm build`、デプロイコマンドは `pnpm --filter @okinawa-care/edge exec wrangler deploy`。Node 24とpnpm 9.15.4を使用し、ビルド用の `PUBLIC_*` を設定します。配信対象は `apps/recruit/dist` のみで、`archive/` は含まれません。
 

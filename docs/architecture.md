@@ -2,7 +2,7 @@
 
 ## 採用から全体刷新へ
 
-2026-09-06の依頼に合わせ、実装基盤はCloudflare／TypeScriptとします。2026-09-07に採用サイトの公開先を `https://recruit.okinawakaigo.com/` に指定し、完成まではCloudflare Accessのメール認証とnoindexで限定公開する方針になりました。過去の納品物のサブドメイン・Pages・Apps Script案より、今回の依頼を優先しました。過去の契約書や議事録は履歴として変更していません。
+実装基盤はCloudflare／TypeScript、採用サイトの公開先は `https://recruit.okinawakaigo.com/` です。制作確認中は共有ID・パスワードによるBasic認証とnoindexで限定公開します。過去の契約書や議事録は履歴として変更していません。
 
 採用だけを独立したビジュアルにせず、「利用者の暮らしと働く人の暮らし、どちらも大切にする」を共通のブランド方針とします。採用の主導線は説明会・見学相談。過去の議事録にある30〜40代のフルタイム人材を主に想定しつつ、年齢による応募制限は表現しません。
 
@@ -10,7 +10,7 @@
 
 ```mermaid
 flowchart LR
-  Visitor[求職者] --> Edge[Cloudflare Workers]
+  Visitor[閲覧者] --> Edge[Cloudflare Workers・Basic認証]
   Edge --> Assets[Astroの静的HTML・CSS・画像]
   Edge --> API[TypeScript 計測API]
   API --> D1[(D1 日付・媒体・操作別の件数)]
@@ -24,9 +24,9 @@ flowchart LR
 
 Astroを採用した理由は、文章・写真が主体のページを静的HTMLとして届けられるためです。メニューやフォームへの引き継ぎだけをTypeScriptで動かし、職種とFAQの開閉には標準のdetails要素を使用します。Reactのクライアントランタイムは不要です。
 
-Cloudflare Workers Static Assetsは静的ファイルとAPIを一緒に配信できます。通常のファイル配信はStatic Assets、`/api/*`だけWorkerを先に実行します。バックエンドは小さなFetchハンドラーで開始し、認証付きの業務サービスが必要になった時点で個別のWorkerを追加します。
+Cloudflare Workers Static Assetsは静的ファイルとAPIを一緒に配信できます。全リクエストでWorkerを先に実行し、Basic認証に成功した場合だけStatic AssetsまたはAPIに渡します。認証情報が未設定なら配信しません。ID・パスワードはGitHub Secretsを管理元とし、CIがコードと同時にWorker Secretsへ登録します。レスポンスにはnoindexとキャッシュ禁止を付与し、認証情報を静的配信に引き継ぎません。業務サービスが必要になった時点で、その利用者と権限に合わせた個別の認証・Workerを追加します。
 
-共通化は、実際に再利用する `ui` と `content` に限定。Turborepoや空のサービス、認証、CMSは初版には導入しません。pnpm workspaceで独立したアプリを追加でき、必要になればビルドキャッシュも追加できます。
+共通化は、実際に再利用する `ui` と `content` に限定。Turborepoや空のサービス、CMSは初版には導入しません。pnpm workspaceで独立したアプリを追加でき、必要になればビルドキャッシュも追加できます。
 
 スタイルにはTailwind CSS 4のViteプラグインを使用します。色・書体・文字サイズ・4px単位の余白・ブレークポイントを `packages/ui/src/tokens.css` に定義し、全ページと共通UIが同じテーマを参照します。ボタンと選択欄を共有し、Stylelintで値の直接指定を検査します。具体的な使い分けと写真配置の例外は [スタイルの統一ルール](styling.md) を参照してください。
 

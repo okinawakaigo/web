@@ -6,6 +6,7 @@
   "compatibility_date": "2026-09-06",
   "workers_dev": false,
   "preview_urls": false,
+  "dev": { "host": "127.0.0.1" },
   "routes": [
     { "pattern": "recruit.okinawakaigo.com", "custom_domain": true, "zone_id": "5569cc120a521fe8a69721914b75c648" }
   ],
@@ -13,11 +14,11 @@
     "directory": "../recruit/dist",
     "binding": "ASSETS",
     "not_found_handling": "404-page",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": true
   },
   "observability": { "enabled": false }
   // Optional D1 and rate limit bindings: see docs/deployment.md.
   // Account: Hidechika@okc2000.com's Account (okinawakaigo.com).
-  // Configure Cloudflare Access for this hostname before enabling CI deployment.
+  // Every request requires BASIC_AUTH_USERNAME and BASIC_AUTH_PASSWORD secrets.
   // Optional database bindings are configured separately.
 }

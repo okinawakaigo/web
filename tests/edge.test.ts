@@ -1,18 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
 import worker, { type Env } from '../apps/edge/src/index';
 
+const credentials = { BASIC_AUTH_USERNAME: 'review', BASIC_AUTH_PASSWORD: 'test-only-password:123' };
+const authorization = `Basic ${btoa(`${credentials.BASIC_AUTH_USERNAME}:${credentials.BASIC_AUTH_PASSWORD}`)}`;
+const authorized = (url: string) => new Request(url, { headers: { Authorization: authorization } });
+
 function bindings() {
   const run = vi.fn().mockResolvedValue({ success: true });
   const bind = vi.fn().mockReturnValue({ run });
   const prepare = vi.fn().mockReturnValue({ bind });
   const limit = vi.fn().mockResolvedValue({ success: true });
   const fetch = vi.fn().mockResolvedValue(new Response('asset'));
-  return { env: { ASSETS: { fetch }, METRICS: { prepare }, METRICS_RATE_LIMITER: { limit } } as unknown as Env, run, bind, prepare, limit, fetch };
+  return { env: { ...credentials, ASSETS: { fetch }, METRICS: { prepare }, METRICS_RATE_LIMITER: { limit } } as unknown as Env, run, bind, prepare, limit, fetch };
 }
 function request(body: unknown = { source: 'instagram', medium: 'bio', event: 'page_view' }, options: { origin?: string; contentType?: string; method?: string } = {}) {
   const method = options.method ?? 'POST';
   return new Request('https://okinawakaigo.com/api/events', {
-    method, headers: { Origin: options.origin ?? 'https://okinawakaigo.com', 'Content-Type': options.contentType ?? 'application/json' },
+    method, headers: { Authorization: authorization, Origin: options.origin ?? 'https://okinawakaigo.com', 'Content-Type': options.contentType ?? 'application/json' },
     ...(method === 'POST' ? { body: JSON.stringify(body) } : {}),
   });
 }
@@ -64,14 +68,14 @@ describe('計測API', () => {
   });
   it('D1未設定時や障害時は計測成功にしない', async () => {
     const { env, run } = bindings();
-    expect((await worker.fetch(request(), { ASSETS: env.ASSETS })).status).toBe(503);
+    expect((await worker.fetch(request(), { ...credentials, ASSETS: env.ASSETS })).status).toBe(503);
     run.mockRejectedValue(new Error('database unavailable'));
     expect((await worker.fetch(request(), env)).status).toBe(503);
   });
   it('公開の読み出しAPIを設けず、静的ページは配信する', async () => {
     const { env, fetch } = bindings();
-    expect((await worker.fetch(new Request('https://okinawakaigo.com/api/report'), env)).status).toBe(404);
-    expect(await (await worker.fetch(new Request('https://okinawakaigo.com/'), env)).text()).toBe('asset');
+    expect((await worker.fetch(authorized('https://okinawakaigo.com/api/report'), env)).status).toBe(404);
+    expect(await (await worker.fetch(authorized('https://okinawakaigo.com/'), env)).text()).toBe('asset');
     expect(fetch).toHaveBeenCalledOnce();
   });
 });
