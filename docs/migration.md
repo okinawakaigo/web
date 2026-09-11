@@ -33,11 +33,11 @@ PRの画面・共通データ・Worker・テスト・画像・依存バージョ
 
 ## 起動と確認
 
-現行サイトはルートで `pnpm install --frozen-lockfile`、`pnpm dev` を実行します。検証は `pnpm check`、`pnpm test`、`pnpm build` と `pnpm --filter @okinawa-care/edge exec wrangler deploy --dry-run`。Workerを含む確認は `pnpm preview` を使います。
+現行サイトはルートで `pnpm install --frozen-lockfile`、`pnpm dev` を実行します。検証は `pnpm check`、`pnpm test`、`pnpm build` と `pnpm --filter @okinawa-care/api exec wrangler deploy --dry-run`。Workerを含む確認は `pnpm preview` を使います。
 
 旧サイトの確認手順は [archive/README.md](../archive/README.md) を参照してください。復元用の元ファイルは保存先に揃っており、移行前のコミットもGit履歴に残っています。
 
-フォーム・検索登録・計測はPRと同じく未設定／無効の状態です。公開には実写・募集条件の確定、Googleフォームの接続、Cloudflareとドメインの設定が必要です。詳細は [deployment.md](deployment.md) を参照してください。
+移行時はフォーム・検索登録・計測が未設定／無効でした。その後、専用フォーム＋D1・管理画面・Resend APIへ方針を更新しました。現在の公開準備は [deployment.md](deployment.md) を参照してください。
 
 ## 移行時の検証結果
 

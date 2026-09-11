@@ -48,7 +48,7 @@ const assets = ['.css', '.webp', '.woff2'].map(extension => {
   return `/${file}`;
 });
 const paths = [
-  ['/', 200], ['/design/', 200], ['/privacy/', 200], ['/photo-brief/', 200],
+  ['/', 200], ['/design/', 404], ['/privacy/', 200], ['/photo-brief/', 200],
   ['/robots.txt', 200], ['/sitemap.xml', 200], ['/missing-auth-check', 404],
   ['/api/health', 200], ['/api/events', 405],
   ...assets.map(path => [path, 200]),

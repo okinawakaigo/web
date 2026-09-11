@@ -8,3 +8,4 @@
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
 
 @source './components';
+@source './react';

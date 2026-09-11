@@ -8,6 +8,7 @@ on:
       - 'apps/**'
       - 'packages/**'
       - 'tests/**'
+      - 'scripts/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -29,11 +30,8 @@ env:
   # This site is for private review until its content is approved for publication.
   PUBLIC_SITE_INDEXABLE: 'false'
   PUBLIC_ANALYTICS_ENABLED: ${{ vars.PUBLIC_ANALYTICS_ENABLED || 'false' }}
-  PUBLIC_RESERVATION_URL: ${{ vars.PUBLIC_RESERVATION_URL }}
-  PUBLIC_FORM_SOURCE_FIELD: ${{ vars.PUBLIC_FORM_SOURCE_FIELD }}
-  PUBLIC_FORM_MEDIUM_FIELD: ${{ vars.PUBLIC_FORM_MEDIUM_FIELD }}
-  PUBLIC_FORM_ROLE_FIELD: ${{ vars.PUBLIC_FORM_ROLE_FIELD }}
-  PUBLIC_FORM_STEP_FIELD: ${{ vars.PUBLIC_FORM_STEP_FIELD }}
+  PUBLIC_CONSULTATION_ENABLED: ${{ vars.PUBLIC_CONSULTATION_ENABLED || 'false' }}
+  PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
 
 jobs:
   verify:
@@ -53,30 +51,19 @@ jobs:
       - run: pnpm check
       - run: pnpm test
       - run: pnpm build
-      - run: pnpm --filter @okinawa-care/edge exec wrangler deploy --dry-run
-      - name: Deploy to Cloudflare
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - run: pnpm --filter @okinawa-care/api exec wrangler deploy --dry-run
+      - run: pnpm --filter @okinawa-care/api exec wrangler deploy --config wrangler.dashboard.jsonc --dry-run
+      - name: Deploy recruit and dashboard to Cloudflare
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID }}
           BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}
           BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
-        run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo '::error::Set the CLOUDFLARE_API_TOKEN repository secret before deploying. See docs/deployment.md.'
-            exit 1
-          fi
-          secrets_file="$(mktemp "$RUNNER_TEMP/recruit-secrets.XXXXXX.json")"
-          trap 'rm -f "$secrets_file"' EXIT
-          export RECRUIT_SECRETS_FILE="$secrets_file"
-          node --input-type=module <<'NODE'
-          import { writeFileSync } from 'node:fs';
-          import { hasBasicAuthCredentials } from './apps/edge/src/basic-auth.ts';
-          const { BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD } = process.env;
-          const secrets = { BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD };
-          if (!hasBasicAuthCredentials(secrets)) {
-            throw new Error('Set BASIC_AUTH_USERNAME (1–64 ASCII ID characters) and BASIC_AUTH_PASSWORD (16–256 characters, no control characters) in repository Secrets.');
-          }
-          writeFileSync(process.env.RECRUIT_SECRETS_FILE, JSON.stringify(secrets), { mode: 0o600 });
-          NODE
-          pnpm --filter @okinawa-care/edge exec wrangler deploy --secrets-file "$secrets_file"
-          node apps/edge/scripts/verify-deployment.mjs
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_FROM: ${{ secrets.NOTIFICATION_FROM }}
+          NOTIFICATION_TO: ${{ secrets.NOTIFICATION_TO }}
+        run: pnpm --filter @okinawa-care/api deploy

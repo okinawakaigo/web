@@ -16,9 +16,8 @@
     "not_found_handling": "404-page",
     "run_worker_first": true
   },
-  "observability": { "enabled": false }
-  // Optional D1 and rate limit bindings: see docs/deployment.md.
-  // Account: Hidechika@okc2000.com's Account (okinawakaigo.com).
-  // Every request requires BASIC_AUTH_USERNAME and BASIC_AUTH_PASSWORD secrets.
-  // Optional database bindings are configured separately.
+  "observability": { "enabled": false },
+  "vars": { "CONSULTATION_ENABLED": "false", "DASHBOARD_URL": "https://dashboard.okinawakaigo.com/" },
+  "d1_databases": [{ "binding": "DB", "database_name": "recruitment", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  "ratelimits": [{ "name": "CONSULTATION_RATE_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }]
 }

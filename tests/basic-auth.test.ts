@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import worker, { type Env } from '../apps/edge/src/index';
+import worker, { type Env } from '../apps/api/src/index';
 
 const origin = 'https://recruit.okinawakaigo.com';
 const credentials = { BASIC_AUTH_USERNAME: 'review', BASIC_AUTH_PASSWORD: 'test-only-password:123' };

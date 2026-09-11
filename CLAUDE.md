@@ -1,40 +1,36 @@
 # 沖縄介護センター Web基盤
 
-## 現在の構成
+資料・ユーザーへの説明は日本語。Node.js 24・pnpm 9.15.4のモノレポです。移行元と保存資料は [docs/migration.md](docs/migration.md) を参照してください。
 
-`jnlmyz/junabel` の PR #2 にある `nursing/website` を、このリポジトリのルートへ移行したpnpmモノレポ。移行の範囲と元のコミットは [docs/migration.md](docs/migration.md) を参照する。資料は日本語で書く。
+## 構成と方針
 
-- `apps/recruit`: Astro＋TypeScriptの静的採用サイト。現在は `/` に採用1ページ、`/privacy/`、`/design/`、`/photo-brief/` を配置
-- `apps/edge`: Cloudflare Workersによる静的配信と任意の件数計測API
-- `packages/ui`: 共通の色・書体・余白・コンポーネント
-- `packages/content`: 会社・職種・FAQ・流入元・GoogleフォームURL生成
-- `docs`: 現行の設計・公開手順・素材の出典
-- `archive/legacy-2026-09-07`: 旧HTMLサイト・仕様資料・開発設定の保存版
+- `apps/recruit`: Astroの採用サイトと説明会への参加相談フォーム。
+- `apps/dashboard`: React＋Viteの社内ダッシュボード。概要と採用の参加相談をサイドバーで切り替える。予定URLは `https://dashboard.okinawakaigo.com/`。
+- `apps/api`: Hono＋Cloudflare Workers、D1保存、管理API、Resend API。旧 `apps/edge` を役割が分かる名前に変更。
+- `apps/design`: ローカル専用デザインガイド。公開しない。採用サイトに `/design/` を戻さず、デプロイの静的配信対象にも追加しない。
+- `packages/ui`: 共通トークンと操作部品。`packages/contracts`: APIの型・項目・検証。`packages/content`: 原稿と流入分類。
+- 入口は「説明会への参加相談」。専用フォームからD1に保存する。Googleフォーム・Sheets APIは使わず、採用の電話リンクは設けない。
+- 年齢層・性別は任意。流入元と掲載場所は入力欄を設けず、既知のURLパラメータだけを相談に付加する。管理画面で確認できる。
+- 採用サイトの制作確認用Basic認証と管理者用Basic認証を分ける。未設定時は配信を閉じる。全静的ファイルとAPIを認証し、noindex・キャッシュ禁止を付ける。
+- 秘密情報はWorker Secrets・GitHub Actions Secrets・Git管理対象外の `.dev.vars` に置く。`PUBLIC_*` に含めない。
+- D1保存後、担当者にResend APIで通知する。メール本文は受付番号と認証必須の管理画面リンクのみ。失敗しても相談の保存を維持する。
+- ローカルのTurnstile検証省略はループバック限定。本番の受付にはTurnstileとレート制限が必要。
+- 未確認の給与・勤務条件・職員の声は作らない。提案していた新ロゴは不採用のため使用せず、会社名を文字で表示する。素材の扱いは [docs/content-sources.md](docs/content-sources.md) を参照。
+- Tailwind CSS 4・`packages/ui/src/tokens.css` を使う。ボタン・選択欄・入力欄は共通部品を使用。[docs/styling.md](docs/styling.md) に従う。
+- `archive/` は保存資料。通常の変更・ビルド・配信の対象外で、旧仕様を現行方針として適用しない。
 
-## 開発
-
-リポジトリのルートから、Node.js 22.12以上（推奨24 LTS）・pnpm 9.15.4で実行する。
+## 開発・確認
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm dev
-pnpm lint:styles
+pnpm db:migrate:local
+pnpm preview
+pnpm dev:design
 pnpm check
 pnpm test
 pnpm build
 ```
 
-Worker・配信ヘッダー・404を確認するときは `pnpm preview`。GitHub ActionsはPRで検証し、`main` への対象ファイルのpushでは検証成功後にWorkersへデプロイする。対象アカウントは `apps/edge/wrangler.jsonc` に固定し、CIの認証にはリポジトリSecretの `CLOUDFLARE_API_TOKEN` を使う。詳細は [README.md](README.md) と [docs/deployment.md](docs/deployment.md)。
+`pnpm preview` はサイト `127.0.0.1:8787` と管理 `127.0.0.1:8788`、`pnpm dev:design` は4324。画面だけの編集は `pnpm dev`（4322）・`pnpm dev:dashboard`（4323）。設定ファイルは既存値を上書きせず [README.md](README.md) に従う。
 
-## 実装方針
-
-- 説明会・見学相談を入口にする。受付はGoogleフォームに統一し、採用の電話リンクは設けない
-- フォーム未設定時は「受付準備中」と表示し、入力・送信を無効にする。個人情報はサイトや計測DBで受け付けない
-- 公開先は `https://recruit.okinawakaigo.com/`。WorkerのBasic認証で全ページ・画像・APIを保護する。ID・パスワードはGitHub Actions Secretsからデプロイ時に登録し、未設定なら配信しない。`workers.dev`・プレビューURLは無効にする
-- レビュー中はCIでnoindexを固定し、静的配信・APIにも `X-Robots-Tag` を付ける。計測は初期状態で無効。未確認の給与・勤務条件・職員の声は作らない
-- Astroで静的HTMLを生成し、操作に必要な箇所だけTypeScriptを使う。共通化は実際に再利用するUIとデータに限定する
-- スタイルはTailwind CSS 4と `packages/ui/src/tokens.css` に統一する。色・文字・余白のルールは [docs/styling.md](docs/styling.md) に従い、ボタン・選択欄は共通部品を使う。`pnpm check` でStylelintも実行する
-- デザイン方針は [docs/architecture.md](docs/architecture.md)、素材・原稿の確認箇所は [docs/content-sources.md](docs/content-sources.md) を参照する
-- 旧構成の会社トップ・職種別5ページ・ツアーナースページはアーカイブに保存済み。今後の企業サイトや職種別ページを設計する際の参考にする
-- `archive/` は保存資料として扱い、通常の実装変更・ビルド・配信の対象にしない。アーカイブ内の旧技術方針やURL構成を現行の指示として適用しない
-- 新ドメインへの公開を想定する。既存の会社サイトは別管理で、移行作業にDNS・メール設定の変更は含めない
+CIは検査・ビルド・両Workerのドライランを実施し、`DEPLOY_ENABLED=true` の `main` pushでのみ本番へ反映する。D1・Resend・ドメインの設定と公開手順は [docs/deployment.md](docs/deployment.md) を参照。既存会社サイトやメールのDNSは一括変更しない。

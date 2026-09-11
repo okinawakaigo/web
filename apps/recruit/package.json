@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev --host 127.0.0.1",
+    "dev": "astro dev --host 127.0.0.1 --port 4322",
     "build": "astro build",
     "check": "astro check"
   },
@@ -14,7 +14,8 @@
     "@okinawa-care/content": "workspace:*",
     "@okinawa-care/ui": "workspace:*",
     "astro": "7.3.1",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "@okinawa-care/contracts": "workspace:*"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",

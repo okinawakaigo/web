@@ -1,6 +1,6 @@
 # スタイルの統一ルール
 
-Tailwind CSS 4をAstroのViteプラグインで使用します。採用ページ・補助ページ・共通UIは、`packages/ui/src/tokens.css` の同じテーマを参照します。確認用の `/design/` も実際のテーマと共通部品を表示します。
+Tailwind CSS 4をAstroと管理画面のViteプラグインで使用します。採用ページ・補助ページ・共通UIは、`packages/ui/src/tokens.css` の同じテーマを参照します。ローカル専用の `apps/design` が実際のテーマと共通部品を表示します。`pnpm dev:design` で起動し、ガイドは公開しません。
 
 ## 値の定義
 
@@ -23,19 +23,19 @@ Tailwind CSS 4をAstroのViteプラグインで使用します。採用ページ
 ## コンポーネントとCSSの配置
 
 - 単独の配置調整にはHTMLのTailwindクラスを使います。例：`class="mt-6 w-full"`。
-- ボタンは `Button.astro`、ラベル付き選択欄は `SelectField.astro` を使います。リンクと送信ボタンの見た目は同じ定義を参照します。送信ボタンは `as="button" type="submit"` を指定します。
+- ボタンは `Button.astro`、ラベル付き選択欄は `SelectField.astro`、入力欄は `TextField.astro` を使います。入力文字は16pxにそろえます。リンクと送信ボタンの見た目は同じ定義を参照します。送信ボタンは `as="button" type="submit"` を指定します。
 - 共通の見出し・コンテナー・操作部品は `packages/ui/src/components.css` に集約します。
 - ページ固有の写真配置や開閉状態は、そのページのCSSで扱います。繰り返す宣言は `@apply` でテーマのユーティリティを使い、`@layer components` に置きます。
 - Astroの `<style>` には `@reference "@okinawa-care/ui/styles.css";` を付けます。グローバルCSSを再出力するための `@import` は使いません。
-- 共有CSSの読み込みはLayoutから1回。優先順位は `theme → base → components → utilities` です。コンポーネントを調整するクラスはutilitiesで上書きできます。
+- 共有CSSはAstroのLayoutまたはReactのエントリーポイントから1回読み込みます。優先順位は `theme → base → components → utilities` です。コンポーネントを調整するクラスはutilitiesで上書きできます。
 - TailwindのPreflightは使用せず、`base.css` でリセットと基本表示を管理します。箇条書き・フォーム・フォーカス・`hidden`・動きを減らす設定を確認してください。
-- Tailwindが読み取る範囲は `apps/recruit/src` と `packages/ui/src/components` に限定します。クラス名は完全な文字列で記述し、`bg-${color}` のような組み立ては避けます。
+- Tailwindは各アプリの `src` と `packages/ui/src/components` を読み取ります。他アプリの画面固有クラスは取り込みません。クラス名は完全な文字列で記述し、`bg-${color}` のような組み立ては避けます。
 
 ```astro
-<Button href="#reserve">説明会・見学の相談</Button>
+<Button href="#reserve">説明会への参加相談</Button>
 <Button as="button" type="submit" class="mt-6 w-full">送信する</Button>
 <SelectField id="role" name="role" label="気になっている仕事">
-  <option>相談して決めたい</option>
+  <option value="その他">その他</option>
 </SelectField>
 ```
 
@@ -62,3 +62,11 @@ HTMLでは `max-md:grid-cols-1`、通常CSSでは `@variant max-md` を使いま
 StylelintはHTMLのTailwindクラスの組み合わせまでは判定しません。任意値クラス、テーマにない新しい値、写真配置の例外はレビューで確認します。変更後はデスクトップ・スマートフォン、メニュー・開閉・無効フォーム・キーボードフォーカスを確認します。
 
 参考：[TailwindのAstro導入](https://tailwindcss.com/docs/installation/framework-guides/astro)、[テーマ変数](https://tailwindcss.com/docs/theme)、[Preflightの省略](https://tailwindcss.com/docs/preflight#disabling-preflight)。
+
+## AstroとReactの共通化
+
+CSSトークンと見た目は共通です。Astro用の部品は `packages/ui/src/components`、React用の部品は `packages/ui/src/react` に置きます。React側は `@okinawa-care/ui/react` から読み込みます。ボタン・フォーム・ブランドのCSSは `components.css` を共用し、同じ見た目を別々に定義しません。ガイド自体はAstroのローカル専用アプリです。
+
+## 社内ダッシュボード
+
+`apps/dashboard` の画面設計は [dashboard-design.md](dashboard-design.md) を参照してください。業務画面の見出しは本文と同じNoto Sans JPとし、数値にDM Sansを使います。会社のサイドバーと業務画面のレイアウトはアプリ側、色と状態バッジ・コンパクトな操作は `packages/ui` に配置します。Reactの `Button` と `TextField` は `compact` を指定すると高さ44pxの業務用サイズになります。採用フォームの標準56pxは維持します。

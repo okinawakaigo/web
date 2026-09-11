@@ -1,0 +1,50 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "okinawa-care-local",
+  "main": "src/local-worker.ts",
+  "compatibility_date": "2026-09-06",
+  "workers_dev": false,
+  "preview_urls": false,
+  "dev": {
+    "host": "127.0.0.1"
+  },
+  "assets": {
+    "directory": ".wrangler/preview-assets",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": true
+  },
+  "observability": {
+    "enabled": false
+  },
+  "vars": {
+    "CONSULTATION_ENABLED": "false",
+    "DASHBOARD_URL": "https://dashboard.okinawakaigo.com/"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "recruitment",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "CONSULTATION_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": {
+        "limit": 30,
+        "period": 60
+      }
+    },
+    {
+      "name": "ADMIN_RATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": {
+        "limit": 120,
+        "period": 60
+      }
+    }
+  ]
+}

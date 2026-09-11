@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertDenied } from '../apps/edge/scripts/verify-response.mjs';
+import { assertDenied } from '../apps/api/scripts/verify-response.mjs';
 
 const managed = '# Crawler policy\n\n# BEGIN Cloudflare Managed content\nUser-agent: *\nContent-Signal: search=yes,ai-train=no,use=reference\nAllow: /\n\nUser-agent: GPTBot\nDisallow: /\n\n# END Cloudflare Managed Content\n';
 const response = (body = managed, status = 200, challenge = true) => new Response(body, {

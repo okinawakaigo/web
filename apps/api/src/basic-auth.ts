@@ -15,7 +15,7 @@ export function hasBasicAuthCredentials(env: BasicAuthEnv): boolean {
 }
 
 /** Missing secrets fail closed, including in local Worker previews. */
-export function requireBasicAuth(request: Request, env: BasicAuthEnv): Response | null {
+export function requireBasicAuth(request: Request, env: BasicAuthEnv, realm = 'Recruit preview'): Response | null {
   if (!hasBasicAuthCredentials(env)) return new Response('Service unavailable', { status: 503 });
 
   const authorization = request.headers.get('Authorization') ?? '';
@@ -29,6 +29,6 @@ export function requireBasicAuth(request: Request, env: BasicAuthEnv): Response 
 
   return new Response('Authentication required', {
     status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="Recruit preview", charset="UTF-8"' },
+    headers: { 'WWW-Authenticate': `Basic realm="${realm}", charset="UTF-8"` },
   });
 }
