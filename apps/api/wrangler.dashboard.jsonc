@@ -26,6 +26,7 @@
     "enabled": false
   },
   "vars": {
+    "REPLY_ENABLED": "false",
     "DASHBOARD_URL": "https://dashboard.okinawakaigo.com/"
   },
   "d1_databases": [

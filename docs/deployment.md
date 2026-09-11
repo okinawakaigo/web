@@ -10,7 +10,7 @@
 | --- | --- |
 | `apps/recruit/.env` | `PUBLIC_CONSULTATION_ENABLED=true`。Turnstile site keyはローカルでは空で可 |
 | `apps/api/.dev.vars` | サイト用 `BASIC_AUTH_*`、管理用 `ADMIN_*`、`CONSULTATION_ENABLED=true`、`LOCAL_FORM_TEST=true` |
-| 同上のResend設定 | 空なら送信しない。保存された相談は「通知未設定」と表示 |
+| 同上のResend設定 | 空なら担当者通知を送らない。`LOCAL_MAIL_TEST=true` なら相談者への返信はローカルに記録するだけで実送信しない |
 
 ```sh
 pnpm install --frozen-lockfile
@@ -30,7 +30,7 @@ pnpm dev:design
 
 1. Cloudflareの対象アカウントで `recruitment` D1データベースを作成し、IDを控えます。必要なら `pnpm --filter @okinawa-care/api exec wrangler d1 create recruitment` を実行します。このコマンドは本番リソースを作成します。
 2. Turnstileのウィジェットを作成し、許可ホストに `recruit.okinawakaigo.com` を指定します。site keyとsecret keyを別々に設定します。
-3. Resendで送信元ドメインを認証し、送信元アドレス、担当者の通知先アドレス、送信用APIキーを用意します。実際の送信先は一つです。既存メールのDNSを変更する場合は、追加するレコードと影響を確認してから反映します。
+3. Resendで送信元ドメインを認証し、送信用APIキーを用意します。相談者への返信用の送信元と、相手からの返信を受け取るメールアドレス、担当者通知用の送信元・宛先を設定します。既存メールのDNSを変更する場合は、追加するレコードと影響を確認してから反映します。
 4. サイト閲覧用とは異なるパスワードで管理者用認証を用意します。
 5. 下記GitHub設定を登録します。`DEPLOY_ENABLED` は設定が揃った後に `true` にします。
 
@@ -45,6 +45,8 @@ pnpm dev:design
 | `ADMIN_USERNAME`・`ADMIN_PASSWORD` | 管理画面専用の認証情報。サイトと別のパスワード |
 | `TURNSTILE_SECRET_KEY` | 送信検証用の秘密鍵 |
 | `RESEND_API_KEY` | Resend送信用APIキー |
+| `REPLY_FROM` | 相談者への返信に使う認証済み送信元。`沖縄介護センター <address@example.com>` 形式も可 |
+| `REPLY_TO` | 相談者がメールで返信した際の受信先。既存の受信できるメールアドレスを一つ指定 |
 | `NOTIFICATION_FROM` | Resendの認証済み送信元メールアドレス |
 | `NOTIFICATION_TO` | 担当者の通知先メールアドレス |
 
@@ -57,6 +59,7 @@ pnpm dev:design
 | `DEPLOY_ENABLED` | `true` でmainからのデプロイを有効化。初期は無効 |
 | `D1_DATABASE_ID` | 作成した本番D1のID。公開側と管理側で共用 |
 | `PUBLIC_CONSULTATION_ENABLED` | `true` で受付を有効化。初期は `false` |
+| `REPLY_ENABLED` | `true` で管理画面から実際のメール送信を有効化。初期は `false` |
 | `PUBLIC_TURNSTILE_SITE_KEY` | ブラウザ用の公開鍵 |
 | `PUBLIC_ANALYTICS_ENABLED` | 初期は `false`。件数計測用DB・制限を別途設定するまで無効 |
 
@@ -88,7 +91,7 @@ PRとmainのCIで `pnpm check`・`pnpm test`・`pnpm build`・両Workerのドラ
 
 ## Resend通知の確認
 
-D1保存が受付成功の基準です。その後、担当者に受付番号と認証必須の管理画面リンクだけをメールで送ります。相談者への自動返信はありません。担当者が入力されたアドレスへ日程をご案内します。
+D1保存が受付成功の基準です。その後、担当者に受付番号と認証必須の管理画面リンクだけをメールで送ります。相談者への自動返信はありません。担当者がダッシュボードの返信欄から日程をご案内します。
 
 通知の状態は「通知待ち」「通知メールの受付成功」「通知失敗」「通知未設定」。受付成功はResend APIによる受付で、配信完了を保証する表示ではありません。配信先での受信・バウンスはResendで確認します。保存後にWorkerが停止した場合など、通知待ちが残っても管理画面から確認・再試行できます。
 
@@ -96,7 +99,23 @@ D1保存が受付成功の基準です。その後、担当者に受付番号と
 
 本番受付前に、自分の連絡先で一件送信し、D1保存・管理画面・通知メールの実配信・返信の担当者を確認してください。ローカルのResend設定を空にした確認では実メールを送っていません。
 
+## ダッシュボードからの返信
+
+相談を開き、返信欄で件名・本文を入力して送信します。宛先は登録済みの相談者のメールアドレスに固定し、担当者メモは送信しません。自動返信や自動的な対応状況の変更は行いません。
+
+- 有効化：`REPLY_ENABLED=true` と `RESEND_API_KEY`・`REPLY_FROM`・`REPLY_TO` を設定します。返信を有効化する際にこれらが欠けているとデプロイ検証が停止します。`REPLY_FROM` はResendの認証済みドメイン、`REPLY_TO` は現在受信できるメールアドレスにします。
+- ローカル：`.dev.vars` に `LOCAL_MAIL_TEST=true` を追加し、マイグレーション後に `pnpm preview` を再起動します。ループバックではキーが設定されていてもメールを送信せず、履歴に「テスト記録・未送信」と表示します。本番デプロイでは必ず `LOCAL_MAIL_TEST=false` になります。テスト記録を後で実送信することはできません。
+- 保存：`consultation_replies` に相談ID・返信ID・作成日時・件名・本文・送信元・宛先・Reply-To・管理者ID・送信結果を保存します。管理者IDは共有Basic認証のIDなので個人の識別にはなりません。送信本文と宛先はResendに送る前に固定し、失敗後も保存します。
+- 再試行：同じ返信IDと固定したペイロードでResendのIdempotency-Keyを再利用します。タイムアウトは「送信結果の確認が必要」と表示し、未送信とは断定しません。「同じ内容で再試行」で確認し、作成から23時間を超えたものはResendで結果を確認します。送信受付済みの返信は再送しません。
+- 表示：「送信受付済み」はResend APIの受付結果です。配信完了・バウンスはResendで確認します。履歴は50件ずつ取得し、件名・本文はHTMLとして実行しません。メール本文・秘密鍵をログには出しません。
+- 受信：相談者からのメール返信は `REPLY_TO` に設定した既存の受信箱で確認します。受信Webhook、ダッシュボードへの受信取り込み、添付ファイルの送受信は今回の実装には含みません。
+
+APIは管理者認証の内側にある `GET/POST /api/consultations/:id/replies` と `POST /api/consultations/:id/replies/:replyId/retry`。送信は同一OriginのJSONで最大32KiB、件名160文字・本文6,000文字までです。公開側Workerには返信APIを追加しません。送信本文と履歴は相談と同じ保持方針で管理し、相談削除時は外部キーで返信も削除します。
+
+本番の実配信テストは、設定後に合意したテスト宛先で実施してください。ローカルと自動テストでは実際のメールを送信しません。
+
 ## 件数計測（任意）
+
 
 旧来の匿名件数API `/api/events` は残しています。現在の画面は `page_view`・`reserve_view` を送信でき、旧 `form_open` は過去データとの互換のため型に残します。受付数は `consultations` の保存件数で確認します。
 

@@ -14,6 +14,7 @@
 - 採用サイトの制作確認用Basic認証と管理者用Basic認証を分ける。未設定時は配信を閉じる。全静的ファイルとAPIを認証し、noindex・キャッシュ禁止を付ける。
 - 秘密情報はWorker Secrets・GitHub Actions Secrets・Git管理対象外の `.dev.vars` に置く。`PUBLIC_*` に含めない。
 - D1保存後、担当者にResend APIで通知する。メール本文は受付番号と認証必須の管理画面リンクのみ。失敗しても相談の保存を維持する。
+- ダッシュボードから相談者へResend APIで返信する。`consultation_replies` に本文・宛先・送信者ID・送信結果を保存し、再試行では同じ本文と重複防止キーを使う。相談者からのメールは `REPLY_TO` の受信箱で確認する。ローカルの `LOCAL_MAIL_TEST=true` はループバック限定で記録のみ、実送信しない。
 - ローカルのTurnstile検証省略はループバック限定。本番の受付にはTurnstileとレート制限が必要。
 - 未確認の給与・勤務条件・職員の声は作らない。提案していた新ロゴは不採用のため使用せず、会社名を文字で表示する。素材の扱いは [docs/content-sources.md](docs/content-sources.md) を参照。
 - Tailwind CSS 4・`packages/ui/src/tokens.css` を使う。ボタン・選択欄・入力欄は共通部品を使用。[docs/styling.md](docs/styling.md) に従う。

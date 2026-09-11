@@ -1,0 +1,66 @@
+@reference "@okinawa-care/ui/styles.css";
+
+@layer components {
+  .detail-panel.detail-panel--conversation { width: min(1120px, 100%); }
+  .detail-workspace { @apply grid flex-1 min-h-0; grid-template-columns: minmax(0, 1fr) 360px; }
+  .detail-context { @apply min-h-0 min-w-0 flex flex-col border-l border-line; }
+  .detail-context:only-child { grid-column: 1 / -1; }
+  .detail-context .detail-body { @apply px-6; }
+  .detail-context .detail-facts { @apply gap-x-3; grid-template-columns: 7rem minmax(0, 1fr); }
+  .detail-context .detail-footer { @apply px-6 flex-wrap; }
+  .detail-mobile-tabs { @apply hidden; }
+  .reply-workspace { @apply flex flex-col min-h-0 min-w-0 bg-canvas; }
+  .reply-header { @apply flex items-center justify-between gap-4 px-6 py-4 bg-paper border-b border-line shrink-0; }
+  .reply-header h3 { @apply flex items-center gap-2 text-body font-semibold; }
+  .reply-header p { @apply text-caption text-muted mt-1 break-all; }
+  .reply-header .button { @apply shrink-0; }
+  .reply-history { @apply flex-1 min-h-24 overflow-y-auto px-6 py-5; overscroll-behavior: contain; }
+  .reply-older { @apply text-center my-5; }
+  .message-meta { @apply flex flex-wrap gap-x-3 gap-y-1 text-caption text-muted mb-2; }
+  .message-meta time { @apply ml-auto; }
+  .message-paper { @apply p-4 bg-paper rounded-card border border-line text-body leading-body break-words; }
+  .message-paper h4 { @apply text-body font-semibold; }
+  .message-paper dl { @apply mt-3 mb-0; }
+  .message-paper dt { @apply text-caption text-muted mt-3; }
+  .message-paper dd { @apply mt-1 mx-0 mb-0 whitespace-pre-wrap; }
+  .outgoing-message { @apply mt-6 ml-6; }
+  .outgoing-message .message-paper { @apply bg-mist border-line; }
+  .message-text { @apply whitespace-pre-wrap mt-3; }
+  .message-addresses { @apply mt-4 border-t border-line pt-3 text-caption; }
+  .message-addresses summary { @apply text-muted; }
+  .message-state { @apply flex flex-wrap items-center justify-end gap-3 text-caption mt-2 text-muted; }
+  .message-state--accepted { @apply text-primary; }
+  .message-state--failed, .message-state--uncertain, .message-state--pending { @apply text-error; }
+  .reply-empty { @apply my-8 text-center text-label text-muted leading-body; }
+  .reply-composer { @apply shrink-0 overflow-y-auto px-6 pt-4 pb-5 bg-paper border-t border-line; max-height: 65%; }
+  .reply-composer .field-label { @apply text-label mt-3 mb-1; }
+  .reply-composer .field-textarea { @apply block border-line-strong; min-height: calc(var(--spacing) * 24); }
+  .reply-composer .field-input { @apply border-line-strong; }
+  .reply-test-notice { @apply text-caption text-warning bg-warning-soft rounded-small px-3 py-2 leading-compact; }
+  .reply-routing { @apply text-caption text-muted leading-compact break-words; }
+  .reply-error { @apply text-body text-error bg-error-soft rounded-control p-3 my-3; }
+  .reply-composer .save-feedback { @apply mt-3; }
+  .reply-composer > .subtle-text { @apply mt-3; }
+  .reply-reset { @apply inline text-primary underline ml-2; }
+  .reply-actions { @apply flex items-center justify-between gap-4 mt-4; }
+  .reply-footnote { @apply text-caption text-muted mt-3; }
+  @media (width < theme(--breakpoint-nav)) {
+    .detail-workspace { @apply flex flex-col; }
+    .detail-mobile-tabs { @apply flex shrink-0 border-b border-line px-5 gap-6 bg-paper; }
+    .detail-mobile-tabs button { @apply min-h-control-compact text-label text-muted border-b-2 border-transparent; }
+    .detail-mobile-tabs button[aria-pressed="true"] { @apply text-primary border-primary font-semibold; }
+    .detail-context { @apply flex-1 border-l-0; }
+    .reply-workspace { @apply flex-1; }
+    .detail-workspace[data-panel="replies"]:has(.reply-workspace) .detail-context,
+    .detail-workspace[data-panel="details"] .reply-workspace { @apply hidden; }
+  }
+  @media (width < theme(--breakpoint-sm)) {
+    .reply-header { @apply px-4 py-3; }
+    .reply-history { @apply px-4 py-4; }
+    .reply-composer { @apply px-4 pb-4; }
+    .outgoing-message { @apply ml-3; }
+    .message-paper { @apply p-3; }
+    .reply-composer .field-textarea { min-height: calc(var(--spacing) * 20); }
+    .reply-footnote { @apply hidden; }
+  }
+}

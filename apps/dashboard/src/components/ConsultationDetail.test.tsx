@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ConsultationDetail from './ConsultationDetail';
 import type { Consultation } from '@okinawa-care/contracts';
+// Reply sending has its own integration tests; these cover the memo editor independently.
+vi.mock('./ReplyThread', () => ({ default: () => null }));
 
 const item: Consultation = {
   id: 'a74608c1-36aa-4c08-9a99-f9d0ca8e54e9', createdAt: '2026-09-11T01:00:00Z', name: '<script>test</script>',
