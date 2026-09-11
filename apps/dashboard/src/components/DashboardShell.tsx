@@ -19,29 +19,26 @@ export default function DashboardShell({ route, pending, navigate, children }: {
   const navLink: Navigate = (href, event) => { navigate(href, event); setMenuOpen(false); };
   const navigation = <>
     <a href="#overview" className="workspace-brand" onClick={event => navLink('#overview', event)} aria-label="沖縄介護センター ダッシュボードの概要">
-      <span><strong>沖縄介護センター</strong><span className="workspace-product">Dashboard</span></span>
+      <span><strong>沖縄介護センター</strong><small>ダッシュボード</small></span>
     </a>
     <nav className="workspace-nav" aria-label="メインナビゲーション">
       <a href="#overview" className="nav-item" aria-current={route.page === 'overview' ? 'page' : undefined} onClick={event => navLink('#overview', event)}><Icon name="overview" /><span>概要</span></a>
-      <div className="nav-group-label"><Icon name="people" /><span>採用</span></div>
-      <a href="#consultations" className="nav-item nav-item--child" aria-current={route.page === 'consultations' ? 'page' : undefined} onClick={event => navLink('#consultations', event)}><Icon name="inbox" /><span>参加相談</span>{pending !== undefined && pending > 0 && <span className="nav-count" aria-label={`未対応 ${pending}件`}>{pending}</span>}</a>
+      <p className="nav-group">採用</p>
+      <a href="#consultations" className="nav-item" aria-current={route.page === 'consultations' ? 'page' : undefined} onClick={event => navLink('#consultations', event)}><Icon name="inbox" /><span>参加相談</span>{pending !== undefined && pending > 0 && <span className="nav-count" aria-label={`未対応 ${pending}件`}>{pending}</span>}</a>
     </nav>
     <div className="sidebar-bottom">
       <a href={recruitUrl} target="_blank" rel="noreferrer" className="sidebar-external">採用サイトを開く<Icon name="external" width="16" height="16" /><span className="sr-only">（新しいタブ）</span></a>
-      <div className="workspace-account"><span className="account-symbol"><Icon name="shield" /></span><span><strong>管理者</strong><small>沖縄介護センター</small></span></div>
     </div>
   </>;
   return <div className="dashboard-shell">
     <a href="#main-content" className="skip-link" onClick={event => { event.preventDefault(); document.getElementById('main-content')?.focus(); }}>本文へ移動</a>
     <aside className="dashboard-sidebar">{navigation}</aside>
     <div className="dashboard-workspace">
-      <header className="workspace-topbar">
-        <button className="icon-button mobile-menu" aria-label="メニューを開く" aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(true)}><Icon name="menu" /></button>
-        <div className="breadcrumbs"><span>ダッシュボード</span><Icon name="chevron" width="14" height="14" /><span>{route.page === 'overview' ? '概要' : '採用'}</span>{route.page === 'consultations' && <><Icon name="chevron" width="14" height="14" /><strong>参加相談</strong></>}</div>
-        <time className="workspace-date" dateTime={new Date().toISOString().slice(0, 10)}>{new Intl.DateTimeFormat('ja-JP', { month: 'long', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo' }).format(new Date())}</time>
+      <header className="mobile-bar">
+        <button className="icon-button" aria-label="メニューを開く" aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(true)}><Icon name="menu" /></button>
+        <strong>沖縄介護センター</strong>
       </header>
       <main id="main-content" className="dashboard-main" tabIndex={-1}>{children}</main>
-      <footer className="workspace-footer">沖縄介護センター<span>ダッシュボード</span></footer>
     </div>
     {menuOpen && <dialog id="mobile-navigation" className="mobile-navigation" ref={menu} aria-label="メインメニュー" onCancel={event => { event.preventDefault(); setMenuOpen(false); }} onClick={event => { if (event.target === event.currentTarget) setMenuOpen(false); }}>
       <div className="mobile-navigation-inner"><button className="icon-button menu-close" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)}><Icon name="close" /></button>{navigation}</div>
