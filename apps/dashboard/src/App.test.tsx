@@ -9,9 +9,7 @@ const listing: ConsultationList = { items: [item], total: 82, hasMore: true, cou
 const fetchMock = vi.fn();
 beforeEach(() => {
   history.replaceState(null, '', '/#overview');
-  fetchMock.mockReset().mockImplementation(async (path: string) => Response.json(path.endsWith('/replies')
-    ? { items: [], nextCursor: null, settings: { available: true, localTest: true, from: 'local@example.invalid', replyTo: 'local@example.invalid' } }
-    : path.includes(item.id) ? item : listing));
+  fetchMock.mockReset().mockImplementation(async (path: string) => Response.json(path.includes(item.id) ? item : listing));
   vi.stubGlobal('fetch', fetchMock);
   vi.spyOn(HTMLDialogElement.prototype, 'showModal').mockImplementation(function (this: HTMLDialogElement) { this.open = true; });
   vi.spyOn(HTMLDialogElement.prototype, 'close').mockImplementation(function (this: HTMLDialogElement) { this.open = false; });
@@ -19,16 +17,6 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('ダッシュボードの業務導線', () => {
-  it('返信の下書きも、閉じる操作と再読み込みから保護する', async () => {
-    history.replaceState(null, '', '/#' + item.id);
-    render(<App />); await screen.findByText('ローカル確認用です。返信を記録しますが、メールは送信しません。');
-    fireEvent.change(screen.getByLabelText('返信本文'), { target: { value: 'まだ送信していない返信' } });
-    const confirm = vi.fn().mockReturnValue(false); vi.stubGlobal('confirm', confirm);
-    fireEvent.click(screen.getByRole('button', { name: '詳細を閉じる' }));
-    expect(confirm).toHaveBeenCalledOnce(); expect(screen.getByRole('dialog')).toBeTruthy();
-    const unload = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(unload);
-    expect(unload.defaultPrevented).toBe(true);
-  });
   it('全件の状態別集計から未対応の一覧へ移動できる', async () => {
     render(<App />);
     await screen.findByText('累計 82件');

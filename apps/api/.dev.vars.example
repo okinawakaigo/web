@@ -8,12 +8,6 @@ CONSULTATION_ENABLED=true
 LOCAL_FORM_TEST=true
 TURNSTILE_SECRET_KEY=
 RESEND_API_KEY=
-# 返信はループバック限定で記録だけ行う（キーがあっても実送信しない）。
-LOCAL_MAIL_TEST=true
-REPLY_ENABLED=false
-REPLY_FROM=
-# 相談者がメールで返信した際の受信先。実際に受信できるメールアドレス。
-REPLY_TO=
 NOTIFICATION_FROM=
 NOTIFICATION_TO=
 DASHBOARD_URL=https://dashboard.okinawakaigo.com/

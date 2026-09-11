@@ -3,9 +3,8 @@ import { requireBasicAuth, hasBasicAuthCredentials } from './basic-auth';
 import { privateResponse, privateHeaders } from './response-headers';
 import { adminConsultations, type ConsultationEnv } from './consultations';
 import { errorResponse, loopback } from './http';
-import { consultationReplies, type ReplyEnv } from './replies';
 
-export interface DashboardEnv extends ConsultationEnv, ReplyEnv {
+export interface DashboardEnv extends ConsultationEnv {
   ASSETS: Fetcher;
   ADMIN_USERNAME?: string;
   ADMIN_PASSWORD?: string;
@@ -31,9 +30,6 @@ app.get('/api/consultations', c => adminConsultations(c.req.raw, c.env));
 app.get('/api/consultations/:id', c => adminConsultations(c.req.raw, c.env));
 app.patch('/api/consultations/:id', c => adminConsultations(c.req.raw, c.env));
 app.post('/api/consultations/:id/notify', c => adminConsultations(c.req.raw, c.env));
-app.get('/api/consultations/:id/replies', c => consultationReplies(c.req.raw, c.env));
-app.post('/api/consultations/:id/replies', c => consultationReplies(c.req.raw, c.env));
-app.post('/api/consultations/:id/replies/:replyId/retry', c => consultationReplies(c.req.raw, c.env));
 app.all('/api/*', () => new Response(null, { status: 404 }));
 app.all('*', c => {
   const request = new Request(c.req.raw); request.headers.delete('Authorization');

@@ -1,6 +1,6 @@
 # 沖縄介護センター Web基盤
 
-採用サイトと社内ダッシュボードをまとめたpnpmモノレポです。コンテンツはAstro、管理画面はReact＋Vite、APIはHono＋Cloudflare Workers、保存にD1、相談者への返信と担当者通知にResend APIを使用します。
+採用サイトと社内ダッシュボードをまとめたpnpmモノレポです。コンテンツはAstro、管理画面はReact＋Vite、APIはHono＋Cloudflare Workers、保存にD1、通知にResend APIを使用します。
 
 ## ローカル起動
 
@@ -66,10 +66,6 @@ pnpm build  # 3画面をビルドし、公開用成果物にガイドがない�
 詳しくは [公開手順](docs/deployment.md)、[設計](docs/architecture.md)、[スタイル](docs/styling.md)、[出典](docs/content-sources.md) を参照してください。旧 `jnlmyz/junabel` からの移行履歴は [移行記録](docs/migration.md) に保存しています。
 
 ## ダッシュボード
-
-相談の詳細から件名・本文を入力してメールで返信し、相談ごとの送信履歴を確認できます。宛先は相談者の登録メールに固定。送信結果が不明な場合も同じ返信として再試行し、重複を防ぎます。担当者メモは返信本文と別に保存します。
-
-ローカルは `apps/api/.dev.vars` の `LOCAL_MAIL_TEST=true` で「テスト返信を記録」を使えます。Resendへは接続しません。本番は `REPLY_ENABLED=true`、`RESEND_API_KEY`、認証済み送信元 `REPLY_FROM`、実際に受信できる `REPLY_TO` が必要です。相談者からの返信はそのメール受信箱で確認します。ダッシュボードへの受信取り込み・添付送信は未実装です。[返信の設定](docs/deployment.md#ダッシュボードからの返信)を参照してください。
 
 `apps/dashboard` は会社全体の業務を管理するReact＋Viteアプリです。概要から対応状況を確認し、サイドバーの「採用 → 参加相談」で検索・絞り込み・詳細の編集ができます。未保存の変更がある移動時は確認を表示します。メールの旧形式の詳細リンクも引き続き使用できます。
 

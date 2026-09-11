@@ -64,9 +64,6 @@ jobs:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          REPLY_ENABLED: ${{ vars.REPLY_ENABLED || 'false' }}
-          REPLY_FROM: ${{ secrets.REPLY_FROM }}
-          REPLY_TO: ${{ secrets.REPLY_TO }}
           NOTIFICATION_FROM: ${{ secrets.NOTIFICATION_FROM }}
           NOTIFICATION_TO: ${{ secrets.NOTIFICATION_TO }}
         run: pnpm --filter @okinawa-care/api deploy

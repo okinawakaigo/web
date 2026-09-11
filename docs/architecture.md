@@ -12,7 +12,7 @@
 flowchart LR
   Visitor[相談者] --> Recruit[採用サイト・公開側Worker]
   Recruit --> D1[(D1 参加相談)]
-  Recruit --> Resend[Resend API・通知と返信]
+  Recruit --> Resend[Resend API・担当者通知]
   Staff[担当者] --> Admin[dashboard・管理者認証]
   Admin --> D1
   Admin --> Resend
@@ -58,8 +58,6 @@ APIは同一Origin・JSON・本文サイズ・入力内容を検査し、Turnsti
 
 保存後にResend APIで担当者へ通知します。個人情報をメール本文には含めず、受付番号と認証が必要な管理画面リンクを送ります。通知失敗でも保存を維持し、管理画面から重複防止キーを使って再試行できます。初回から23時間を越えた再試行は停止します。
 
-担当者はダッシュボード内で相談内容を確認し、その場でメールを返信できます。返信は `consultations` と1対多の `consultation_replies` に保存し、社内メモと分離します。Resendに送る前に宛先・件名・本文を固定し、同じ返信IDで再試行します。送信結果が不明でも本文を残し、23時間を越えた再送は停止します。相手からの返信は `REPLY_TO` の既存受信箱に届きます。受信の取り込みは未実装です。
-
 件数計測は任意・初期無効です。日付（日本時間）×媒体×掲載場所×操作の件数のみを別の `METRICS` DBに保存し、氏名・IP・Cookie・ユーザーID・自由入力のURLを含めません。現在の画面は `page_view` と `reserve_view` を送信し、受付数はD1に保存した相談で数えます。計測失敗はフォーム送信に影響させません。
 
 ## 受付から確認までのシーケンス
@@ -87,14 +85,6 @@ sequenceDiagram
   AdminAPI->>DB: 相談を読み出す
   DB-->>AdminAPI: 相談データ
   AdminAPI-->>Admin: 詳細を表示
-  Staff->>Admin: 件名・返信本文を入力して送信
-  Admin->>AdminAPI: 返信ID・件名・本文
-  AdminAPI->>DB: 宛先と送信内容を固定して保存
-  AdminAPI->>Mail: 同じ返信IDの重複防止キーで送信
-  Mail-->>AdminAPI: 送信受付結果
-  AdminAPI->>DB: 送信結果を更新
-  AdminAPI-->>Admin: 返信履歴を表示
-  Mail-->>Visitor: 担当者からのメール
 ```
 
 受付と管理は別Worker・別オリジンで、管理側は専用認証を通します。Cloudflare Tunnelは使用しません。本番はCloudflare上に配信し、ローカル確認はループバックに限定します。ローカルではResend未設定時にメールは送信されません。
