@@ -33,7 +33,7 @@
 
 ## 開発・確認
 
-Reactの派生値はレンダー中に計算し、操作に伴う処理はイベントハンドラに置く。関連する状態はreducerにまとめる。D1のクエリはDrizzleを使い、`apps/api/src/db/`に置く。[docs/code-quality.md](docs/code-quality.md) に従い、ESLint・Stylelintを通す。
+Reactの派生値はレンダー中に計算し、操作に伴う処理はイベントハンドラに置く。関連する状態はreducerにまとめる。D1のクエリはDrizzleを使い、`apps/api/src/db/`に置く。採用サイト側Workerは受付用の `intake.ts`・`db/intake.ts` だけを使い、管理用の `consultations.ts`・`db/consultations.ts` をimportしない（ESLintで検出）。CSPの `script-src` に `'unsafe-inline'` を入れないため、公開ページにインラインスクリプトを置かない（ビルド時に検査）。[docs/code-quality.md](docs/code-quality.md) に従い、ESLint・Stylelintを通す。
 
 ```sh
 pnpm install --frozen-lockfile

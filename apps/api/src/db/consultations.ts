@@ -1,7 +1,8 @@
 import { and, count, desc, eq, or, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
-import { statuses, type Consultation, type ConsultationInput, type ConsultationList, type Status } from '@okinawa-care/contracts';
+import { statuses, type Consultation, type ConsultationList, type Status } from '@okinawa-care/contracts';
+import { submittedFields } from './intake';
 import { consultations } from './schema';
 
 // Explicit projections keep mail payloads out of the API, and contact details out of lists.
@@ -10,9 +11,8 @@ const summaryFields = {
   role: consultations.role, status: consultations.status, notification: consultations.notification,
 };
 const detailFields = {
-  ...summaryFields, email: consultations.email, ageGroup: consultations.ageGroup, gender: consultations.gender,
-  availability: consultations.availability, questions: consultations.questions,
-  source: consultations.source, medium: consultations.medium, note: consultations.note, revision: consultations.revision,
+  ...submittedFields, createdAt: consultations.createdAt, status: consultations.status,
+  notification: consultations.notification, note: consultations.note, revision: consultations.revision,
 };
 const pageSize = 50;
 function containsText(column: SQLiteColumn, value: string) {
@@ -20,17 +20,10 @@ function containsText(column: SQLiteColumn, value: string) {
   return sql`${column} LIKE ${pattern} ESCAPE ${'\\'}`;
 }
 
+/** Admin-only listing, detail and updates. ESLint keeps this module out of the recruit Worker. */
 export function consultationRepository(binding: D1Database) {
   const db = drizzle(binding);
   return {
-    checkAvailable: () => db.select({ id: consultations.id }).from(consultations).limit(1).all(),
-
-    async create(input: ConsultationInput, createdAt: string) {
-      const { consent: _consent, ...values } = input;
-      await db.insert(consultations).values({ ...values, createdAt })
-        .onConflictDoNothing({ target: consultations.id }).run();
-    },
-
     find: (id: string): Promise<Consultation | undefined> => db.select(detailFields)
       .from(consultations).where(eq(consultations.id, id)).get(),
 

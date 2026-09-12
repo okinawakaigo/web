@@ -40,6 +40,17 @@ describe('書き方のルールをCIで検出する', () => {
     expect(result.messages.map(message => message.ruleId)).toEqual(expect.arrayContaining(['no-restricted-imports', 'no-restricted-syntax']));
   });
 
+  it('採用サイト側から管理用の相談処理をimportできない', async () => {
+    const rules = async (code: string, filePath: string) => (await eslint.lintText(code, { filePath }))[0].messages.map(message => message.ruleId);
+    for (const [code, filePath] of [
+      [`import { adminConsultations } from './consultations'; export { adminConsultations };`, 'apps/api/src/intake-example.ts'],
+      [`import { consultationRepository } from './db/consultations'; export { consultationRepository };`, 'apps/api/src/intake-example.ts'],
+      [`import { consultationRepository } from './consultations'; export { consultationRepository };`, 'apps/api/src/db/intake-example.ts'],
+    ]) expect(await rules(code, filePath), filePath).toContain('no-restricted-imports');
+    expect(await rules(`import { intakeRepository } from './db/intake'; export { intakeRepository };`, 'apps/api/src/intake-example.ts')).toEqual([]);
+    expect(await rules(`import { consultationRepository } from './db/consultations'; export { consultationRepository };`, 'apps/api/src/dashboard-worker.ts')).toEqual([]);
+  });
+
   it('DB層のDrizzleクエリと、レンダー中の派生値の計算は許可する', async () => {
     const [database] = await eslint.lintText(`import { drizzle } from 'drizzle-orm/d1';
       import { consultations } from './schema';

@@ -15,7 +15,9 @@
 
 ## D1とDrizzle
 
-`apps/api/src/db/schema.ts`で既存D1テーブルとTypeScriptの列名を対応させます。クエリは同じディレクトリの`consultations.ts`・`notifications.ts`・`metrics.ts`に置きます。HTTPハンドラでは入力検証・認証後の処理・レスポンスを扱い、DB処理はこれらの関数を呼び出します。
+`apps/api/src/db/schema.ts`で既存D1テーブルとTypeScriptの列名を対応させます。クエリは同じディレクトリの`intake.ts`（受付：登録と登録直後の読み戻し）・`consultations.ts`（管理：一覧・詳細・更新）・`notifications.ts`・`metrics.ts`に置きます。HTTPハンドラも`intake.ts`（採用サイト）と`consultations.ts`（管理画面）に分け、入力検証・認証後の処理・レスポンスを扱い、DB処理はこれらの関数を呼び出します。
+
+D1はバインディング単位の権限を持たないため、採用サイト側Workerの最小権限はコードで守ります。採用サイトから到達するモジュールは`db/intake.ts`の受付リポジトリだけを使い、管理用の`consultations.ts`・`db/consultations.ts`をimportしません。この境界はESLintが検出します。
 
 一覧と詳細で取得する列を明示し、通知用の内部データをAPIへ返しません。検索文字列はパラメータとして渡し、`%`・`_`・`\`は通常の文字として検索します。`sql`タグは検索のESCAPE・カウンタ加算・COALESCEなどの式に限定し、値を文字列連結しません。
 
@@ -32,6 +34,7 @@
 | `react-hooks/rules-of-hooks` | 条件分岐やループ内でのフック呼び出し |
 | `react-hooks/refs`などの推奨ルール | レンダー中のref操作、stateの直接変更など |
 | DB層の境界 | `src/db/`外のAPIコードでDrizzleをimportすること、`.prepare()`でSQLを直接実行すること |
+| 採用サイト側の最小権限 | 管理Worker以外の`apps/api/src/`コードが`consultations.ts`・`db/consultations.ts`をimportすること |
 
 フックの個数による機械的な禁止は設けません。既存の制御文字拒否用の正規表現だけは、意図をコメントした行単位の例外です。
 
@@ -42,5 +45,7 @@ pnpm lint         # 両方実行
 pnpm check        # Lintと全アプリの型検査
 pnpm test         # 振る舞いとLintの検出を確認
 ```
+
+`pnpm build`の最後に`scripts/check-public-assets.mjs`が、公開する両アプリのHTMLにインラインスクリプトとインラインのイベント属性がないことを確認します。Workerが付けるCSPの`script-src`に`'unsafe-inline'`を含めないためで、採用サイトはAstroの`vite.build.assetsInlineLimit: 0`でスクリプトを常にファイルとして出力します。
 
 CIも`pnpm check`と`pnpm test`を実行します。Drizzleのクエリは本番用マイグレーションを適用したSQLiteで検証し、D1の呼び出し形式だけをテスト用に変換します。

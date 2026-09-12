@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { requireBasicAuth, type BasicAuthEnv } from './basic-auth';
 import { privateResponse, privateHeaders } from './response-headers';
-import { receiveConsultation, type ConsultationEnv } from './consultations';
+import { receiveConsultation, type IntakeEnv } from './intake';
 import { errorResponse, loopback } from './http';
 import { recordEvent } from './metrics';
 
-export interface Env extends BasicAuthEnv, ConsultationEnv {
+export interface Env extends BasicAuthEnv, IntakeEnv {
   ASSETS: Fetcher;
   METRICS?: D1Database;
   METRICS_RATE_LIMITER?: RateLimit;

@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { requireBasicAuth, hasBasicAuthCredentials } from './basic-auth';
 import { privateResponse, privateHeaders } from './response-headers';
-import { adminConsultations, type ConsultationEnv } from './consultations';
+import { adminConsultations, type AdminEnv } from './consultations';
 import { errorResponse, loopback } from './http';
 
-export interface DashboardEnv extends ConsultationEnv {
+export interface DashboardEnv extends AdminEnv {
   ASSETS: Fetcher;
   ADMIN_USERNAME?: string;
   ADMIN_PASSWORD?: string;
