@@ -7,6 +7,7 @@ import localWorker from '../apps/api/src/local-worker';
 import { notifyConsultation } from '../apps/api/src/mail';
 import { parseConsultation } from '../packages/contracts/src/consultations';
 import { expectPrivate } from './helpers';
+import { sqliteD1 } from './sqlite-d1';
 
 const id = 'a74608c1-36aa-4c08-9a99-f9d0ca8e54e9';
 const input = { id, name: '動作確認', email: 'test@example.invalid', role: 'その他', ageGroup: '', gender: '', availability: '平日午後', questions: '', source: 'instagram', medium: 'bio', consent: true };
@@ -23,18 +24,7 @@ let assetFetch: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   sql = new DatabaseSync(':memory:');
   sql.exec(readFileSync(new URL('../apps/api/migrations/0002_consultations.sql', import.meta.url), 'utf8'));
-  const DB = { prepare(query: string) {
-    const statement = sql.prepare(query);
-    function bound(values: (string | number)[] = []) {
-      return {
-        bind: (...next: (string | number)[]) => bound(next),
-        first: async () => statement.get(...values) ?? null,
-        all: async () => ({ results: statement.all(...values), success: true }),
-        run: async () => ({ success: true, meta: { changes: Number(statement.run(...values).changes) } }),
-      };
-    }
-    return bound();
-  } } as unknown as D1Database;
+  const DB = sqliteD1(sql);
   assetFetch = vi.fn().mockImplementation(async () => new Response('asset'));
   env = { BASIC_AUTH_USERNAME: 'recruit', BASIC_AUTH_PASSWORD: 'test-preview-password', ASSETS: { fetch: assetFetch } as unknown as Fetcher, DB, CONSULTATION_ENABLED: 'true', LOCAL_FORM_TEST: 'true' };
   adminEnv = { DB, ASSETS: env.ASSETS, ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: 'test-dashboard-password' };

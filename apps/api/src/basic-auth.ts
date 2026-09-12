@@ -11,7 +11,7 @@ export function hasBasicAuthCredentials(env: BasicAuthEnv): boolean {
     && typeof env.BASIC_AUTH_PASSWORD === 'string'
     && env.BASIC_AUTH_PASSWORD.length >= 16
     && env.BASIC_AUTH_PASSWORD.length <= 256
-    && !/[\x00-\x1f\x7f]/.test(env.BASIC_AUTH_PASSWORD);
+    && !/[\x00-\x1f\x7f]/.test(env.BASIC_AUTH_PASSWORD); // eslint-disable-line no-control-regex -- パスワード中の制御文字を意図的に拒否する。
 }
 
 /** Missing secrets fail closed, including in local Worker previews. */

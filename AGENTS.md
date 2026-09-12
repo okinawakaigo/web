@@ -33,6 +33,8 @@
 
 ## 開発・確認
 
+Reactの派生値はレンダー中に計算し、操作に伴う処理はイベントハンドラに置く。関連する状態はreducerにまとめる。D1のクエリはDrizzleを使い、`apps/api/src/db/`に置く。[docs/code-quality.md](docs/code-quality.md) に従い、ESLint・Stylelintを通す。
+
 ```sh
 pnpm install --frozen-lockfile
 pnpm db:migrate:local   # ローカルD1にマイグレーションを適用

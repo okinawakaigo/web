@@ -32,10 +32,13 @@ pnpm preview
 `pnpm dev`（4322）・`pnpm dev:dashboard`（4323）は画面編集用で、APIと認証は動きません。保存・管理操作は `pnpm preview` で確認します。Astroの開発サーバーは対象アプリで `pnpm exec astro dev stop`、Viteの開発サーバーは起動したターミナルのCtrl+Cで終了します。
 
 ```sh
-pnpm check  # スタイル検査・全アプリの型チェック
+pnpm lint   # ESLint・Stylelint
+pnpm check  # Lint・全アプリの型チェック
 pnpm test   # 認証・入力検証・実際のSQLiteによる保存・更新・通知再試行
 pnpm build  # 3画面をビルドし、公開用成果物にガイドがないことを検査
 ```
+
+Reactの状態・Effectと、DrizzleによるDB処理の書き方は [コード品質の方針](docs/code-quality.md) にまとめています。ESLintは警告も失敗扱いとし、CIで同じ検査を実行します。
 
 ## 構成
 

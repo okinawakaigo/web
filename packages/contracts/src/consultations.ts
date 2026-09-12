@@ -39,7 +39,7 @@ export function parseConsultation(value: unknown): ConsultationInput | null {
   if (Object.keys(v).some(key => !keys.includes(key)) || !isId(v.id) || v.consent !== true) return null;
   const limits = { name: 100, email: 254, role: 30, ageGroup: 20, gender: 20, availability: 1000, questions: 2000, source: 30, medium: 30 };
   for (const [key, limit] of Object.entries(limits)) {
-    if (typeof v[key] !== 'string' || (v[key] as string).length > limit || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(v[key] as string)) return null;
+    if (typeof v[key] !== 'string' || (v[key] as string).length > limit || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(v[key] as string)) return null; // eslint-disable-line no-control-regex -- 許可した改行・タブ以外の制御文字を拒否する。
   }
   if (!(v.name as string).trim() || /[\r\n]/.test(v.name as string)
     || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v.email as string).trim())

@@ -15,6 +15,7 @@ on:
       - '.node-version'
       - '.npmrc'
       - 'stylelint.config.mjs'
+      - 'eslint.config.mjs'
       - '.github/workflows/website-ci.yml'
 
 permissions:

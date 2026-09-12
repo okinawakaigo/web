@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Consultation, ConsultationList } from '@okinawa-care/contracts';
 import App from './App';
@@ -17,6 +17,35 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('ダッシュボードの業務導線', () => {
+  it('検索前の遅い応答で、新しい検索結果を上書きしない', async () => {
+    history.replaceState(null, '', '/#consultations');
+    let finishOld!: (response: Response) => void;
+    fetchMock.mockReset().mockReturnValueOnce(new Promise<Response>(resolve => { finishOld = resolve; }))
+      .mockResolvedValue(Response.json({ ...listing, items: [{ ...item, name: '新しい検索結果' }] }));
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('お名前・仕事で検索'), { target: { value: '新しい' } });
+    fireEvent.click(screen.getByRole('button', { name: '検索' }));
+    await screen.findByText('新しい検索結果');
+    await act(async () => { finishOld(Response.json({ ...listing, items: [{ ...item, name: '古い検索結果' }] })); });
+    expect(screen.queryByText('古い検索結果')).toBeNull();
+    expect(screen.getByText('新しい検索結果')).toBeTruthy();
+  });
+
+  it('ブラウザ経由の移動をキャンセルすると、編集中の詳細とURLを維持する', async () => {
+    const hash = '#consultations/' + item.id;
+    history.replaceState(null, '', '/' + hash);
+    render(<App />);
+    await screen.findByRole('heading', { name: item.name });
+    fireEvent.change(screen.getByLabelText('担当者メモ'), { target: { value: '未保存のメモ' } });
+    vi.stubGlobal('confirm', vi.fn().mockReturnValue(false));
+    act(() => {
+      history.replaceState(null, '', '/#overview');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    expect(location.hash).toBe(hash);
+    expect((screen.getByLabelText('担当者メモ') as HTMLTextAreaElement).value).toBe('未保存のメモ');
+  });
+
   it('全件の状態別集計から未対応の一覧へ移動できる', async () => {
     render(<App />);
     await screen.findByText('累計 82件');

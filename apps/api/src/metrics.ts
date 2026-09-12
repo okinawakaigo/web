@@ -1,5 +1,6 @@
-import { eventNames, readAttribution } from '@okinawa-care/content/attribution';
+import { eventNames, readAttribution, type EventName } from '@okinawa-care/content/attribution';
 import type { Env } from './index';
+import { incrementDailyEvent } from './db/metrics';
 
 const reply = (status: number) => new Response(null, { status });
 
@@ -40,9 +41,6 @@ export async function recordEvent(request: Request, env: Env): Promise<Response>
   if (normalized.source !== data.source || normalized.medium !== data.medium) return reply(400);
 
   const day = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date());
-  await env.METRICS.prepare(`INSERT INTO daily_events (day, source, medium, event, count)
-    VALUES (?, ?, ?, ?, 1)
-    ON CONFLICT(day, source, medium, event) DO UPDATE SET count = count + 1`)
-    .bind(day, normalized.source, normalized.medium, data.event).run();
+  await incrementDailyEvent(env.METRICS, day, normalized, data.event as EventName);
   return reply(204);
 }

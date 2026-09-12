@@ -9,20 +9,27 @@
   "scripts": {
     "dev": "pnpm --filter @okinawa-care/recruit dev",
     "build": "pnpm --filter @okinawa-care/recruit build && pnpm --filter @okinawa-care/dashboard build && pnpm --filter @okinawa-care/design build && node scripts/check-public-assets.mjs",
-    "check": "pnpm lint:styles && pnpm --filter @okinawa-care/recruit check && pnpm --filter @okinawa-care/dashboard check && pnpm --filter @okinawa-care/design check && pnpm --filter @okinawa-care/api check",
+    "check": "pnpm lint && pnpm --filter @okinawa-care/recruit check && pnpm --filter @okinawa-care/dashboard check && pnpm --filter @okinawa-care/design check && pnpm --filter @okinawa-care/api check",
     "test": "vitest run",
     "preview": "pnpm build && node scripts/preview.mjs",
     "deploy": "pnpm check && pnpm test && pnpm build && pnpm --filter @okinawa-care/api deploy",
     "lint:styles": "stylelint \"apps/*/src/**/*.{css,astro}\" \"packages/ui/src/**/*.{css,astro}\"",
     "dev:dashboard": "pnpm --filter @okinawa-care/dashboard dev",
     "dev:design": "pnpm --filter @okinawa-care/design dev",
-    "db:migrate:local": "pnpm --filter @okinawa-care/api db:migrate:local"
+    "db:migrate:local": "pnpm --filter @okinawa-care/api db:migrate:local",
+    "lint": "pnpm lint:code && pnpm lint:styles",
+    "lint:code": "eslint . --max-warnings 0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
     "happy-dom": "20.14.3",
     "postcss-html": "2.0.0",
     "stylelint": "17.15.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.0",
     "vitest": "^5.0.0"
   }
 }
