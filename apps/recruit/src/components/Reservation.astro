@@ -1,100 +1,52 @@
 ---
-import { jobs, nextSteps } from "@okinawa-care/content";
+import { roles, ageGroups, genders } from "@okinawa-care/contracts";
 import Button from "@okinawa-care/ui/Button.astro";
 import SelectField from "@okinawa-care/ui/SelectField.astro";
+import TextField from "@okinawa-care/ui/TextField.astro";
 import Icon from "@okinawa-care/ui/Icon.astro";
-import { reservation, hasReservation } from "../config";
+import { hasReservation, turnstileSiteKey } from "../config";
 ---
-
-<section
-  id="reserve"
-  class="reservation section"
-  aria-labelledby="reserve-title"
->
+<section id="reserve" class="reservation section" aria-labelledby="reserve-title">
   <div class="content-container reservation-grid">
     <div class="reservation-intro">
       <span class="reserve-label">あなたのペースで、一歩ずつ。</span>
       <h2 id="reserve-title">まずは、<br />話すところから。</h2>
-      <p>
-        「どんな人たちと働くの？」<br />「私の経験でも大丈夫？」<br
-        />気になることを、そのまま聞かせてください。
-      </p>
-      <div class="reservation-note">
-        <Icon name="people" size={22} /><span
-          >説明会・職場見学についてご相談いただけます</span>
-      </div>
+      <p>「どんな人たちと働くの？」<br />「私の経験でも大丈夫？」<br />気になることを、そのまま聞かせてください。</p>
+      <div class="reservation-note"><Icon name="people" size={22} /><span>応募を決める前に、説明会でお話しできます</span></div>
     </div>
     <div class="reservation-panel">
-      <h3>説明会・見学のご希望を教えてください</h3>
-      <p class="panel-description">
-        {
-          hasReservation
-            ? "職種と次のステップを選ぶと、予約フォームへ進めます。"
-            : "説明会・見学のお申し込みは、ただいま準備中です。"
-        }
-      </p>
-      <form
-        id="reservation-form"
-        data-config={hasReservation ? JSON.stringify(reservation) : undefined}
-      >
-        <fieldset disabled={!hasReservation}>
-          <SelectField
-            id="reservation-role"
-            name="role"
-            label="気になっている仕事"
-            ><option value="その他">相談して決めたい</option>{
-              jobs.map((job) => (
-                <option value={job.shortName}>{job.name}</option>
-              ))
-            }</SelectField
-          >
-          <SelectField
-            id="reservation-step"
-            name="step"
-            label="希望する次のステップ"
-            >{
-              nextSteps.map((step) => (
-                <option value={step.label}>{step.label}</option>
-              ))
-            }</SelectField
-          >
-          <Button
-            as="button"
-            type="submit"
-            class="w-full mt-6"
-            disabled={!hasReservation}
-            icon={hasReservation ? "arrow" : false}
-            >{hasReservation ? "予約フォームへ進む" : "受付準備中"}</Button
-          >
+      <h3>説明会への参加相談</h3>
+      <p class="panel-description">お名前・メールアドレス・気になっている仕事をお聞かせください。年齢層・性別などは任意です。</p>
+      <form id="reservation-form" action="/api/consultations" method="post" data-enabled={hasReservation} data-sitekey={turnstileSiteKey}>
+        <fieldset disabled id="reservation-fields">
+          <TextField id="reservation-name" name="name" label="お名前（氏名）〈必須〉" autocomplete="name" maxlength={100} required />
+          <TextField id="reservation-email" name="email" label="メールアドレス〈必須〉" type="email" autocomplete="email" maxlength={254} required />
+          <p class="text-caption text-muted mt-2">担当者からの日程案内に使用します。</p>
+          <SelectField id="reservation-role" name="role" label="気になっている仕事〈必須〉" required aria-describedby="reservation-role-hint">
+            <option value="その他">その他</option>{roles.filter(role => role !== 'その他').map(role => <option value={role}>{role}</option>)}
+          </SelectField>
+          <p id="reservation-role-hint" class="text-caption text-muted mt-2">迷っている方は「その他」を選んでください。</p>
+          <div class="grid grid-cols-2 gap-4 max-mini:grid-cols-1">
+            <div><SelectField id="reservation-age" name="ageGroup" label="年齢層〈任意〉"><option value="">選択してください</option>{ageGroups.map(value => <option>{value}</option>)}</SelectField></div>
+            <div><SelectField id="reservation-gender" name="gender" label="性別〈任意〉"><option value="">選択してください</option>{genders.map(value => <option>{value}</option>)}</SelectField></div>
+          </div>
+          <TextField id="reservation-availability" name="availability" label="ご都合のよい日時〈任意〉" multiline rows={3} maxlength={1000} aria-describedby="availability-hint" />
+          <p id="availability-hint" class="text-caption text-muted mt-2">例：平日の午前中、○月○日以降など。未定の場合は空欄で構いません。</p>
+          <TextField id="reservation-questions" name="questions" label="説明会で聞きたいこと〈任意〉" multiline maxlength={2000} />
+          <label class="flex items-start gap-3 mt-6 text-body"><input class="mt-2 size-4 shrink-0" type="checkbox" name="consent" required /><span><a href="/privacy/" target="_blank" rel="noopener">個人情報の取り扱い（別タブ）</a>を確認しました。</span></label>
+          <div id="turnstile" class="mt-4"></div>
+          <Button as="button" type="submit" class="w-full mt-6" id="reservation-submit" disabled icon={false}>受付準備中</Button>
         </fieldset>
-        {
-          hasReservation && (
-            <>
-              <p class="form-notice">
-                次の画面でお名前・連絡先をご入力ください。
-                <br />
-                この操作だけでは予約は完了しません。
-              </p>
-              <p id="reservation-error" class="field-error" role="alert" hidden>
-                フォームを開けませんでした。
-                <a href={reservation.url}>
-                  こちらから予約フォームを開いてください。
-                </a>
-              </p>
-            </>
-          )
-        }
+        <p id="reservation-status" class="text-body text-muted mt-4" role="status" aria-live="polite">受付状況を確認しています。</p>
+        <p id="reservation-error" class="field-error" role="alert" hidden></p>
+        <p class="form-notice">送信後、担当者からメールで日程をご案内します。日程は担当者との調整後に確定します。</p>
       </form>
-      {
-        hasReservation && (
-          <noscript>
-            <>
-              <p>以下のリンクから予約フォームをご利用いただけます。</p>
-              <Button href={reservation.url}>予約フォームを開く</Button>
-            </>
-          </noscript>
-        )
-      }
+      <div id="reservation-success" hidden tabindex="-1" class="mt-6" role="status">
+        <h3>参加相談を受け付けました</h3>
+        <p class="text-body mt-3">担当者からメールで日程をご案内します。日程は担当者との調整後に確定します。</p>
+        <p id="receipt-number" class="text-caption text-muted mt-3"></p>
+      </div>
+      <noscript><p class="text-body mt-4">このフォームの送信にはJavaScriptが必要です。ブラウザの設定を有効にして、ページを開き直してください。</p></noscript>
     </div>
   </div>
 </section>
@@ -105,7 +57,7 @@ import { reservation, hasReservation } from "../config";
       @apply bg-primary-dark text-paper;
     }
     .reservation-grid {
-      @apply grid grid-cols-2 items-center;
+      @apply grid grid-cols-2 items-start;
       gap: 10%;
     }
     .reserve-label {

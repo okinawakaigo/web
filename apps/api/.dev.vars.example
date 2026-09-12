@@ -1,0 +1,10 @@
+# ローカル専用。pnpm previewではBasic認証の設定は不要。
+# 本番用Workerの認証情報はWorker Secretsで設定する。
+CONSULTATION_ENABLED=true
+# localhost/127.0.0.1でのみTurnstileを省略。本番では必ずfalse。
+LOCAL_FORM_TEST=true
+TURNSTILE_SECRET_KEY=
+RESEND_API_KEY=
+NOTIFICATION_FROM=
+NOTIFICATION_TO=
+DASHBOARD_URL=https://dashboard.okinawakaigo.com/

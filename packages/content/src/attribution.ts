@@ -15,31 +15,3 @@ export function readAttribution(params: URLSearchParams): Attribution {
   const validMediums: readonly string[] = sourceMediums[source as keyof typeof sourceMediums];
   return { source: source as Source, medium: validMediums.includes(medium) ? medium : 'none' };
 }
-
-export interface ReservationConfig {
-  url: string;
-  fields: { source: string; medium: string; role: string; step: string };
-}
-
-export function reservationIsConfigured(config: ReservationConfig): boolean {
-  try {
-    const url = new URL(config.url);
-    return url.protocol === 'https:' && url.hostname === 'docs.google.com'
-      && /^\/forms\/d\/e\/[\w-]+\/viewform$/.test(url.pathname)
-      && Object.values(config.fields).every(field => /^entry\.\d+$/.test(field))
-      && new Set(Object.values(config.fields)).size === 4;
-  } catch { return false; }
-}
-
-export function buildReservationUrl(config: ReservationConfig, attribution: Attribution, role: string, step: string): string | null {
-  if (!reservationIsConfigured(config)) return null;
-  const url = new URL(config.url);
-  url.search = ''; // Keep only the explicitly configured prefill fields.
-  url.hash = '';
-  url.searchParams.set('usp', 'pp_url');
-  url.searchParams.set(config.fields.source, attribution.source);
-  url.searchParams.set(config.fields.medium, attribution.medium);
-  url.searchParams.set(config.fields.role, role);
-  url.searchParams.set(config.fields.step, step);
-  return url.href;
-}

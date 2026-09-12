@@ -1,0 +1,9 @@
+---
+import type { HTMLAttributes } from "astro/types";
+type Props = HTMLAttributes<"input"> & { id: string; label: string; multiline?: boolean; rows?: number };
+const { id, label, multiline = false, rows = 4, ...props } = Astro.props;
+---
+<label for={id} class="field-label">{label}</label>
+{multiline
+  ? <textarea id={id} class="field-textarea" rows={rows} name={props.name} required={props.required} maxlength={props.maxlength} placeholder={props.placeholder} aria-describedby={props["aria-describedby"]}></textarea>
+  : <input id={id} class="field-input" {...props} />}

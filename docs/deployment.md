@@ -1,209 +1,111 @@
 # 設定・公開手順
 
-配信先は `okinawakaigo.com` を管理する `Hidechika@okc2000.com's Account`（Account ID: `869d7f9f9faebf609a8363a4f9d9e38b`）です。`apps/edge/wrangler.jsonc` にアカウントを指定しています。ローカルの認証は `jnlmyz@gmail.com` で確認済みです。
+採用サイトは `https://recruit.okinawakaigo.com/`、管理画面は `https://dashboard.okinawakaigo.com/`。`apps/design` はローカル専用で公開しません。配信アカウントは両Wrangler設定に指定した `869d7f9f9faebf609a8363a4f9d9e38b`、ゾーンは `okinawakaigo.com` です。
 
-## GitHub Actionsからの自動デプロイ
+## ローカルで動かす
 
-`.github/workflows/website-ci.yml` で、次の順に実行します。
+初回のみ `.env.example` と `.dev.vars.example` を同じ場所の `.env`・`.dev.vars` にコピーします。既存設定を上書きしないでください。
 
-1. PRではスタイル検査・型チェック・テスト・静的ビルド・Wranglerドライランを実行します。
-2. `main` へのpush（PRマージを含む）では同じ検証を実行し、すべて成功した場合だけ `pnpm --filter @okinawa-care/edge deploy` を実行します。
-3. `okinawa-care-recruit` Workerと `apps/recruit/dist` の静的ファイルをデプロイします。`archive/`、仕様資料、リポジトリ全体は配信しません。
-4. 公開URLで未認証・誤認証の拒否、正しい認証でのページ・画像・CSS・フォント・APIの応答、noindex・キャッシュ禁止・HTTPSへの転送を検証します。認証情報はログに出しません。
-
-`main` の実行対象は `apps/**`、`packages/**`、`tests/**`、ルートの依存・Node設定、`stylelint.config.mjs` とこのワークフローです。`archive/**` や `docs/**`、READMEだけの変更ではデプロイしません。`main` の処理は同時実行を避け、実行中のデプロイは中断しません。PRの古い検証は新しいpushで中断します。
-
-### 最初に設定するSecret
-
-ローカルの `wrangler login` はCIへ引き継がれません。[Cloudflareの公式手順](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/) に従い、上記アカウントに限定したAPIトークンを発行し、GitHubリポジトリ `okinawakaigo/web` の **Settings → Secrets and variables → Actions → Secrets** に登録します。
-
-| 名前 | 値 |
+| ファイル | 設定 |
 | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | 対象アカウントのWorkerをデプロイできるAPIトークン |
-| `BASIC_AUTH_USERNAME` | 閲覧用ID。例：`recruit`。半角英数字で始まる1〜64文字（英数字・`.`・`_`・`@`・`-`） |
-| `BASIC_AUTH_PASSWORD` | パスワードマネージャー等で生成した16〜256文字のランダムなパスワード。改行・制御文字は不可 |
-
-トークンには次の権限と対象リソースを設定します。
-
-| Permissions | 対象リソース |
-| --- | --- |
-| Account → Workers Scripts → Edit | 上記の配信先アカウントのみ |
-| Zone → Workers Routes → Read | `okinawakaigo.com` のみ |
-
-[Custom Domainの接続API](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/update/)は `Workers Scripts: Edit` を使用します。加えて、Wranglerは接続前に既存ルートとの重複を調べるため、[ルート一覧API](https://developers.cloudflare.com/api/resources/workers/subresources/routes/methods/list/)の `Workers Routes: Read` が必要です。ゾーンは `wrangler.jsonc` の `zone_id` で指定しています。Account IDはWranglerの設定から取得するため、別途Secretに登録する必要はありません。トークンはデプロイステップだけに渡します。未設定の場合はエラーを表示して停止します。
-
-`/zones/.../workers/routes` でAuthentication error（code 10000）が出た場合は、CloudflareのMy Profile → API Tokensで既存トークンを編集し、上記のZone権限とZone Resourcesの対象を確認します。同じトークンの権限編集ならGitHub Secretの更新は不要です。トークンを再発行した場合は `CLOUDFLARE_API_TOKEN` も更新してください。
-
-閲覧用ID・パスワードも **Secrets** に登録し、Variables・ソースコード・`PUBLIC_*`には入れません。CIは形式を検証し、権限を600にした一時JSONファイルから `wrangler deploy --secrets-file` でコードと一緒にWorker Secretsへ登録します。一時ファイルは終了時に削除します。初回も認証情報とコードを同じバージョンで公開するため、Cloudflare管理画面でWorkerを先に作る必要はありません。[Secretsの公式手順](https://developers.cloudflare.com/workers/configuration/secrets/)を参照してください。
-
-### ビルド時のVariables
-
-同じ設定画面の **Variables** に、必要な `PUBLIC_*` を登録します。これらはブラウザへ配信される値で、秘密情報は入れません。
-
-| 名前 | 未設定時 |
-| --- | --- |
-| `PUBLIC_ANALYTICS_ENABLED` | `false`（計測を無効） |
-| `PUBLIC_RESERVATION_URL` | 空（受付準備中） |
-| `PUBLIC_FORM_SOURCE_FIELD`、`PUBLIC_FORM_MEDIUM_FIELD`、`PUBLIC_FORM_ROLE_FIELD`、`PUBLIC_FORM_STEP_FIELD` | 空 |
-
-公開URLは `https://recruit.okinawakaigo.com`、検索登録は `false` にCIで固定しています。`PUBLIC_SITE_URL` と `PUBLIC_SITE_INDEXABLE` のGitHub Variablesは使いません。
-
-その他のVariablesは `pnpm build` 時に取り込まれます。設定を変えただけでは再デプロイされないため、`main` の対象ファイルを更新してpushするか、直近の `main` 用ワークフローを再実行します。フォームのURLやentry IDの詳細は後述の「Googleフォーム」を参照してください。
-
-配信先は `https://recruit.okinawakaigo.com/` です。`workers_dev` と `preview_urls` を `false` に固定し、公開URLを独自ドメインに限定しています。Workers Buildsを別途接続すると二重にデプロイされるため、このGitHub Actionsを使う場合は接続不要です。
-
-## Basic認証による限定公開
-
-閲覧制限はWorkerのBasic認証で行います。共有IDとパスワードを知る人が閲覧できる方式で、メールアドレスの本人確認は行いません。Cloudflare Zero Trustの登録は不要です。
-
-1. 上記3件のGitHub Actions Secretsを登録します。
-2. PRの検証成功を確認してマージします。`main` のCIがWorker・認証情報・静的ファイルをまとめてデプロイし、独自ドメインを接続します。
-3. `https://recruit.okinawakaigo.com/` を開き、ブラウザの認証ダイアログに閲覧用ID・パスワードを入力します。
-4. 未認証・誤ったパスワードではトップ・画像・CSS・APIが401、正しい認証ではサイトが表示されることを確認します。HTTPは同じパス・クエリーのHTTPSへ転送します。
-
-`assets.run_worker_first=true` により、全ページ・画像・CSS・フォント・APIで配信前に認証します。認証情報が欠けたり形式が不正だったりする場合は503を返し、ファイルもAPIも配信しません。IDとパスワードを合わせて固定長にハッシュ化し、一定時間で比較するAPIで照合します。認証ヘッダーは静的配信へ引き継ぎません。
-
-認証済みのファイルを含む全レスポンスに `Cache-Control: private, no-store` と `X-Robots-Tag: noindex, nofollow, noarchive` をWorkerから付与します。HTTPSにはHSTSを設定します。noindexは検索登録を避ける指定で、閲覧制限はBasic認証が担当します。[Basic認証の公式実装例](https://developers.cloudflare.com/workers/examples/basic-auth/)を参照してください。
-
-Cloudflareの[managed robots.txt](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)が有効な場合、`/robots.txt` だけはWorkerの401がCloudflare生成のクローラー向け文書（200）に置き換わります。サイト本文は含まれず、Workerの認証要求・noindex・キャッシュ禁止ヘッダーは維持されます。公開後の検証では、このパスに限り自動生成マーカーと文書内容を検査します。認証後はサイト側の `Disallow: /` が含まれることも確認します。その他のページ・画像・APIは必ず未認証の401を確認し、検索登録の抑制は各レスポンスのnoindexと認証で維持します。
-
-パスワードの変更はGitHubの `BASIC_AUTH_PASSWORD` Secretを更新し、直近の `main` 用ワークフローを再実行します。Cloudflare管理画面で直接変更した値は次回CIでGitHubの値に戻るため、GitHub Secretsを管理元にします。共有を終了するときも同じ手順でパスワードを変更してください。ブラウザは認証情報を記憶するため、未認証の確認には新しいプライベートウィンドウを使用します。
-
-## ローカルでの認証確認
-
-`pnpm dev` は認証なしの画面開発用です。Workerを含めて確認する場合は、次のローカル専用設定を作成します。
-
-```sh
-cp apps/edge/.dev.vars.example apps/edge/.dev.vars
-pnpm preview
-```
-
-`http://127.0.0.1:8787/` を開き、`.dev.vars` のID・パスワードを入力します。`.dev.vars` はGit管理対象外で、サンプルの認証情報を本番で使用しません。ループバックHTTPでも認証は必須です。
-
-## ページの設定
-
-`apps/recruit/.env.example` を同じディレクトリの `.env` にコピーします。これらの `PUBLIC_*` はビルド時に埋め込まれる公開情報です。秘密情報は入れないでください。
-
-- `PUBLIC_SITE_URL=https://recruit.okinawakaigo.com`：canonical、OGP、サイトマップの基準URL。
-- `PUBLIC_SITE_INDEXABLE=false`：レビュー中はnoindex。CIでも `false` に固定し、全レスポンスに `X-Robots-Tag: noindex, nofollow, noarchive` を付けています。一般公開の際はCIの固定値、`apps/edge/src/response-headers.ts` のnoindex・キャッシュ設定とBasic認証をあわせて見直します。
-- `PUBLIC_ANALYTICS_ENABLED=false`：D1・Rate Limiterを設定するまで無効。
-
-企業サイトを同一ドメインに追加する際はルーティングとcanonicalを再設計します。既存サイトのDNS・メール設定は、このサイトの公開と一括変更しないでください。
-
-## Googleフォーム
-
-クライアント所有のGoogleアカウントでフォームを作成し、次の項目を用意します。
-
-| 項目 | 内容 |
-| --- | --- |
-| 氏名・連絡先 | 日程調整用。計測DBには送らない |
-| 希望職種 | ヘルパー／ケアマネジャー／相談員／その他 |
-| 希望する次のステップ | 説明会に参加したい／職場を見学したい／面接について相談したい |
-| きっかけ | Instagram／Indeed／ハローワーク／Jwarm／知人・紹介／検索／その他 |
-| 流入元 | 短文、事前入力用 |
-| 掲載場所 | 短文、事前入力用 |
-
-Googleフォームの「事前入力したURLを取得」でサンプル値を入力し、URL内の `entry.数字` を確認します。URLは短縮URLではなく `https://docs.google.com/forms/d/e/.../viewform` を指定してください。
-
-```dotenv
-PUBLIC_RESERVATION_URL=https://docs.google.com/forms/d/e/実際のID/viewform
-PUBLIC_FORM_SOURCE_FIELD=entry.実際の数字
-PUBLIC_FORM_MEDIUM_FIELD=entry.実際の数字
-PUBLIC_FORM_ROLE_FIELD=entry.実際の数字
-PUBLIC_FORM_STEP_FIELD=entry.実際の数字
-```
-
-4つのentry IDはすべて異なる値が必要です。設定が不完全な場合、ビルドを失敗させて壊れた導線の公開を防ぎます。URLが空のときは「受付準備中」と表示し、入力・送信を無効にします。採用の受付はフォームのみです。公開前にフォームを設定し、希望職種・次のステップを引き継げることを確認してください。
-
-希望職種・次のステップは上表とサイトの表示を一致させてください。Googleフォームの事前入力は回答者が編集でき、秘匿や改ざん防止の機能ではありません。新しい予約は実際のフォーム回答で数えます。回答先のスプレッドシートと通知・日程調整の担当者はクライアント側で設定してください。
-
-JavaScriptが無効の場合はフォームへの通常リンクを表示します。その場合、自動入力はされません。外部フォームへの移動は、サイト上では予約完了として扱いません。
-
-## 計測（任意）
-
-`apps/edge` でD1を作成します。
-
-```sh
-pnpm exec wrangler d1 create recruitment-metrics
-```
-
-返されたdatabase_idを `wrangler.jsonc` に追記します。`namespace_id` はアカウント内の他のRate Limiterと重複しない整数文字列にしてください。
-
-```jsonc
-"d1_databases": [{
-  "binding": "METRICS",
-  "database_name": "recruitment-metrics",
-  "database_id": "作成したD1のID",
-  "migrations_dir": "migrations"
-}],
-"ratelimits": [{
-  "name": "METRICS_RATE_LIMITER",
-  "namespace_id": "1001",
-  "simple": { "limit": 120, "period": 60 }
-}]
-```
-
-```sh
-pnpm exec wrangler d1 migrations apply recruitment-metrics --remote
-```
-
-次に `apps/recruit/.env` の `PUBLIC_ANALYTICS_ENABLED=true` を設定して再ビルドします。DBまたはRate Limiterが未設定の場合、APIは503を返し、計測成功にはしません。ローカル検証時は `--remote` を `--local` に置き換えます。
-
-集計の例（管理者がCloudflareのD1コンソール等で実行）：
-
-```sql
-SELECT substr(day, 1, 7) AS month, source, medium, event, SUM(count) AS total
-FROM daily_events
-GROUP BY month, source, medium, event
-ORDER BY month, source, medium, event;
-```
-
-Googleスプレッドシートへの自動同期・月次レポートは、このWeb実装には含めていません。必要な場合は上記の集計結果とGoogleフォームの実回答を別々の列で集計します。
-
-## 計測用リンク
-
-| 入口 | URL |
-| --- | --- |
-| Instagramプロフィール | `https://recruit.okinawakaigo.com/?utm_source=instagram&utm_medium=bio` |
-| Instagramハイライト | `https://recruit.okinawakaigo.com/?utm_source=instagram&utm_medium=highlight` |
-| Instagram投稿・DM | `https://recruit.okinawakaigo.com/?utm_source=instagram&utm_medium=post` |
-| Indeed | `https://recruit.okinawakaigo.com/?utm_source=indeed&utm_medium=listing` |
-| Jwarm | `https://recruit.okinawakaigo.com/?utm_source=jwarm&utm_medium=listing` |
-| 既存サイト | `https://recruit.okinawakaigo.com/?utm_source=corp&utm_medium=link` |
-| 説明会・配布物のQR | `https://recruit.okinawakaigo.com/?utm_source=qr&utm_medium=print` |
-
-許可していないパラメータは保存しません。パラメータがないアクセスは `direct/none` とし、検索と直接アクセスを推定で区別しません。
-
-## ビルドと公開
-
-このリポジトリのルートで実行します。
+| `apps/recruit/.env` | `PUBLIC_CONSULTATION_ENABLED=true`。Turnstile site keyはローカルでは空で可 |
+| `apps/api/.dev.vars` | `CONSULTATION_ENABLED=true`、`LOCAL_FORM_TEST=true`。ローカル起動では認証情報は不要 |
+| 同上のResend設定 | 空なら送信しない。保存された相談は「通知未設定」と表示 |
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm check
-pnpm test
-pnpm build
-pnpm --filter @okinawa-care/edge exec wrangler deploy --dry-run
+pnpm db:migrate:local
 pnpm preview
+# 別ターミナル
+pnpm dev:design
 ```
 
-上記のローカル認証設定を作成してから、`http://127.0.0.1:8787/` で画面、`/api/health` でWorkerを確認できます。通常の公開はGitHub Actionsを使います。手動デプロイが必要な場合は、対象アカウントとWorker Secretsが登録済みであることを確認します。
+サイト `127.0.0.1:8787`・管理画面 `127.0.0.1:8788`はBasic認証なしで開けます。認証の省略はローカル専用Workerのループバック接続に限り、本番用Workerでは常に認証します。ガイドは http://127.0.0.1:4324/ です。ローカルでは受付側と管理側のHonoアプリを一つのWorkerで動かし、`apps/api/.wrangler/state` の同じD1を使います。別プロセスで同じDBを開くと競合するため、`pnpm preview` でまとめて起動します。`wrangler.local.jsonc` はローカル専用でデプロイしません。サイトと管理画面のビルド成果物だけを `.wrangler/preview-assets` にコピーして配信します。画面を変更したら `pnpm preview` を起動し直してください。本番データには接続しません。相談本文、メモ、メールアドレス等をログに出さない実装です。
 
-```sh
-pnpm --filter @okinawa-care/edge exec wrangler whoami
-pnpm deploy
-```
+`pnpm dev` と `pnpm dev:dashboard` は画面開発のみでAPIは動きません。フォームは接続先の準備を確認できない場合、入力・送信を無効にします。ローカルの検証省略は `localhost`・`127.0.0.1`・`[::1]` のみで、本番ホストには適用されません。
 
-独自ドメインは `wrangler.jsonc` の `routes` に設定済みです。Custom Domainの接続に伴うDNS・証明書はCloudflare Workersが管理します。既存の同名レコードがある場合は、用途を確認してから切り替えます。手動デプロイは既存のWorker Secretsを維持しますが、未登録なら503になるため、初回はGitHub Actionsを使用してください。
+## 本番設定
 
-Cloudflare Workers Buildsを使用する場合、接続先は `okinawakaigo/web`、ルートディレクトリはリポジトリのルート（`/`）、ビルドコマンドは `pnpm build`、デプロイコマンドは `pnpm --filter @okinawa-care/edge exec wrangler deploy`。Node 24とpnpm 9.15.4を使用し、ビルド用の `PUBLIC_*` を設定します。配信対象は `apps/recruit/dist` のみで、`archive/` は含まれません。
+本番D1・Turnstile・Resendは未設定です。コードの実装と本番受付の開始は別です。次の設定を用意してからデプロイを有効にします。
 
-## 公開前の実データ確認
+1. Cloudflareの対象アカウントで `recruitment` D1データベースを作成し、IDを控えます。必要なら `pnpm --filter @okinawa-care/api exec wrangler d1 create recruitment` を実行します。このコマンドは本番リソースを作成します。
+2. Turnstileのウィジェットを作成し、許可ホストに `recruit.okinawakaigo.com` を指定します。site keyとsecret keyを別々に設定します。
+3. Resendで送信元ドメインを認証し、送信元アドレス、担当者の通知先アドレス、送信用APIキーを用意します。実際の送信先は一つです。既存メールのDNSを変更する場合は、追加するレコードと影響を確認してから反映します。
+4. サイト閲覧用とは異なるパスワードで管理者用認証を用意します。
+5. 下記GitHub設定を登録します。`DEPLOY_ENABLED` は設定が揃った後に `true` にします。
 
-- 3職種の現在の募集状況・給与・勤務条件
-- 職場環境の制度、説明会・見学の実施方法、フォーム回答の確認・日程調整の担当者
-- 人物写真の新ドメイン利用権・肖像同意、正式ロゴ
-- プライバシー原稿、フォーム回答の閲覧権限・管理方法
-- `.com`の所有権と既存サイトからの案内リンク
+`apps/api/wrangler.jsonc` と `wrangler.dashboard.jsonc` のゼロのD1 IDはローカル用プレースホルダーです。デプロイスクリプトはGitHub Variableの実IDを両設定に反映した一時ファイルを使い、プレースホルダーのままでは停止します。設定ファイルへ直接実IDを書き込む必要はありません。
 
-既存サイトの移行とリダイレクトは別工程です。過去ページをまとめてトップへ転送する設定は加えていません。
+### GitHub Actions Secrets
+
+| 名前 | 内容 |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | 対象アカウントのWorkers Scripts Edit、D1 Edit、対象ゾーンのWorkers Routes Readを持つトークン |
+| `BASIC_AUTH_USERNAME`・`BASIC_AUTH_PASSWORD` | 制作確認用サイトの閲覧情報 |
+| `ADMIN_USERNAME`・`ADMIN_PASSWORD` | 管理画面専用の認証情報。サイトと別のパスワード |
+| `TURNSTILE_SECRET_KEY` | 送信検証用の秘密鍵 |
+| `RESEND_API_KEY` | Resend送信用APIキー |
+| `NOTIFICATION_FROM` | Resendの認証済み送信元メールアドレス |
+| `NOTIFICATION_TO` | 担当者の通知先メールアドレス |
+
+認証IDは1〜64文字、半角英数字で始まり、以後は英数字・`.`・`_`・`@`・`-`。パスワードは16〜256文字、制御文字なしです。本番ではパスワードマネージャー等で生成した値を使い、ローカルのサンプル値は使いません。秘密情報は `PUBLIC_*` やソースコードに入れません。
+
+### GitHub Actions Variables
+
+| 名前 | 内容 |
+| --- | --- |
+| `DEPLOY_ENABLED` | `true` でmainからのデプロイを有効化。初期は無効 |
+| `D1_DATABASE_ID` | 作成した本番D1のID。公開側と管理側で共用 |
+| `PUBLIC_CONSULTATION_ENABLED` | `true` で受付を有効化。初期は `false` |
+| `PUBLIC_TURNSTILE_SITE_KEY` | ブラウザ用の公開鍵 |
+| `PUBLIC_ANALYTICS_ENABLED` | 初期は `false`。件数計測用DB・制限を別途設定するまで無効 |
+
+サイトURL・noindexはCIで固定します。Googleフォーム関連の旧 `PUBLIC_RESERVATION_URL`・`PUBLIC_FORM_*` は不要です。Variablesの変更は実行済みのサイトに自動反映されないため、mainの対象ファイルを更新するかワークフローを再実行します。
+
+## CIとデプロイ
+
+PRとmainのCIで `pnpm check`・`pnpm test`・`pnpm build`・両Workerのドライランを実施します。ビルド後には、公開用の成果物に `/design/` が存在しないこと、各Workerの配信ディレクトリが対象アプリだけであることを検査します。
+
+`DEPLOY_ENABLED=true` のmainでは `scripts/deploy.mjs` が次を行います。
+
+1. D1 ID・別々の認証情報を検証します。受付を有効にする場合はTurnstile・Resend設定も必須です。
+2. 実IDを適用した一時設定と、Workerごとに必要なSecretsのJSONを権限600で作成します。
+3. D1マイグレーションを本番へ適用します。
+4. 管理Worker `okinawa-care-dashboard`、採用Worker `okinawa-care-recruit` の順に配信し、それぞれ独自ドメインを接続します。二つの配信は一つのトランザクションではありません。片方が失敗した場合は原因を直してCIを再実行します。
+5. 未認証・サイト認証では管理情報を取得できないこと、正しい認証で静的ファイルとAPIを読めること、noindex・キャッシュ禁止を検証します。一時ファイルは終了時に削除します。
+
+`apps/design/dist`・`docs`・`archive` は配信しません。`workers.dev` とプレビューURLは無効です。ローカルから公開する場合も `pnpm deploy` を使います。`wrangler deploy` の直接実行は共通の事前検査を迂回するため使わないでください。`node scripts/deploy.mjs --validate` は設定検証のみで、リモートへの変更を行いません（ビルドと設定済み環境変数が必要）。
+
+## 認証とデータの扱い
+
+両Workerは静的ファイルも含め必ず先に認証します。認証未設定では503、未認証・誤認証では401。管理画面に採用サイトの共有パスワードでは入れません。管理画面の認証は共有管理者ID方式で、個人アカウント・権限の段階・操作担当者別の監査ログは初版にはありません。
+
+全レスポンスに `Cache-Control: private, no-store` と `X-Robots-Tag: noindex, nofollow, noarchive`、HTTPSにHSTSを付けます。認証情報をStatic Assetsへ引き継ぎません。Cloudflareが自動生成するrobots.txtだけは未認証の401がクローラー用文書の200に置き換わることがあるため、検証スクリプトで内容とヘッダーを確認します。
+
+受付APIは同一OriginのJSONのみ、最大16KiB、既知の項目・文字数・選択肢を検査します。Turnstileの成功・ホスト・用途を検証し、レート制限を適用します。制限はCloudflare拠点単位の共有キーなので、全世界の厳密な上限ではありません。流入元・掲載場所は媒体分類として扱い、本人確認や改ざん防止には使いません。
+
+管理APIは名前・仕事の検索と状態の絞り込みに対応し、50件ずつ一覧を返します。状態別の件数は全件から集計し、検索結果の件数とは分けて返します。連絡先や相談本文は個別の詳細で取得します。更新時はrevisionを検査し、別画面からの更新を上書きしません。保持期間や削除窓口の運用は受付開始前に決めてください。初版にはCSV出力や削除ボタンはありません。削除依頼は対象を確認して管理者がD1で対応します。
+
+## Resend通知の確認
+
+D1保存が受付成功の基準です。その後、担当者に受付番号と認証必須の管理画面リンクだけをメールで送ります。相談者への自動返信はありません。担当者が入力されたアドレスへ日程をご案内します。
+
+通知の状態は「通知待ち」「通知メールの受付成功」「通知失敗」「通知未設定」。受付成功はResend APIによる受付で、配信完了を保証する表示ではありません。配信先での受信・バウンスはResendで確認します。保存後にWorkerが停止した場合など、通知待ちが残っても管理画面から確認・再試行できます。
+
+再試行には同じ受付番号のIdempotency-Keyと、初回に保存した同じメール内容を使います。Resendの重複防止期間を越えないよう、最初の通知処理から23時間を過ぎた再送は停止します。設定を変えても再試行先は初回の宛先です。期限を越えた通知は管理画面で相談を確認し、手動で対応します。
+
+本番受付前に、自分の連絡先で一件送信し、D1保存・管理画面・通知メールの実配信・返信の担当者を確認してください。ローカルのResend設定を空にした確認では実メールを送っていません。
+
+## 件数計測（任意）
+
+旧来の匿名件数API `/api/events` は残しています。現在の画面は `page_view`・`reserve_view` を送信でき、旧 `form_open` は過去データとの互換のため型に残します。受付数は `consultations` の保存件数で確認します。
+
+有効化する場合は公開Workerに別のD1 `METRICS` と `METRICS_RATE_LIMITER` を設定し、`0001_metrics.sql` をそのDBへ適用してから `PUBLIC_ANALYTICS_ENABLED=true` にします。受付用DBの `DB` バインディングだけでは計測は有効になりません。
+
+## 参照
+
+- [Cloudflare D1](https://developers.cloudflare.com/d1/)
+- [Turnstileのサーバー側検証](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
+- [Resend送信API](https://resend.com/docs/api-reference/emails/send-email)
+- [Resendの重複防止キー](https://resend.com/docs/dashboard/emails/idempotency-keys)
+- [Cloudflare Workers Secrets](https://developers.cloudflare.com/workers/configuration/secrets/)

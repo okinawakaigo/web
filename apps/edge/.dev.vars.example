@@ -1,3 +1,0 @@
-# Local preview only. Set separate, random credentials in GitHub Actions Secrets.
-BASIC_AUTH_USERNAME=recruit
-BASIC_AUTH_PASSWORD=local-preview-only-change-me

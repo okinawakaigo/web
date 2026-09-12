@@ -12,7 +12,7 @@ interface Props {
 }
 const {
   title = "誰かの毎日も、あなたの毎日も、大切に。",
-  description = "沖縄・那覇の沖縄介護センター採用サイト。訪問介護員・ケアマネジャー・相談支援専門員の仕事や、働く環境をご紹介。説明会や職場見学について、お気軽にご相談ください。",
+  description = "沖縄・那覇の沖縄介護センター採用サイト。訪問介護員・ケアマネジャー・相談支援専門員の仕事や、働く環境をご紹介。説明会への参加相談を受け付けています。応募するか決めていなくても、お気軽にご相談ください。",
   noindex = false,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -46,7 +46,6 @@ const structuredData = {
       content={canIndex ? "index,follow" : "noindex,nofollow"}
     />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ja_JP" />
     <meta property="og:site_name" content="沖縄介護センター 採用サイト" />

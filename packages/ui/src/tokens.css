@@ -16,6 +16,15 @@
   --color-inverse-line: #39746b;
   --color-image-placeholder: #c8d8b9;
   --color-error: #a53232;
+  --color-canvas: #f5f8f7;
+  --color-sidebar: #eaf1ee;
+  --color-selected: #d8e8df;
+  --color-warning: #805b1f;
+  --color-warning-soft: #fbf1d9;
+  --color-info: #305e84;
+  --color-info-soft: #eaf1f8;
+  --color-error-soft: #fcf0ef;
+  --color-overlay: #203e3a66;
 
   --font-*: initial;
   --font-body:
@@ -59,6 +68,7 @@
   --spacing: 0.25rem;
   --spacing-control: 3.5rem;
   --spacing-control-compact: 3rem;
+  --spacing-control-dense: 2.75rem;
   --spacing-gutter: clamp(1.5rem, 5vw, 5rem);
   --spacing-section: clamp(4.75rem, 8vw, 7.5rem);
   --spacing-header-gutter: clamp(1.5rem, 3vw, 3.5rem);

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import worker, { type Env } from '../apps/edge/src/index';
+import worker, { type Env } from '../apps/api/src/index';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
+import { sqliteD1 } from './sqlite-d1';
 
 const credentials = { BASIC_AUTH_USERNAME: 'review', BASIC_AUTH_PASSWORD: 'test-only-password:123' };
 const authorization = `Basic ${btoa(`${credentials.BASIC_AUTH_USERNAME}:${credentials.BASIC_AUTH_PASSWORD}`)}`;
@@ -24,12 +27,17 @@ function request(body: unknown = { source: 'instagram', medium: 'bio', event: 'p
 describe('計測API', () => {
   it('JSTの日付と件数だけをアトミックに集計する', async () => {
     vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-05T15:01:00Z'));
+    const sql = new DatabaseSync(':memory:');
+    sql.exec(readFileSync(new URL('../apps/api/migrations/0001_metrics.sql', import.meta.url), 'utf8'));
     try {
-      const { env, bind, prepare } = bindings();
+      const { env } = bindings();
+      env.METRICS = sqliteD1(sql);
       expect((await worker.fetch(request(), env)).status).toBe(204);
-      expect(bind).toHaveBeenCalledWith('2026-09-06', 'instagram', 'bio', 'page_view');
-      expect(prepare.mock.calls[0][0]).toContain('ON CONFLICT');
-    } finally { vi.useRealTimers(); }
+      expect((await worker.fetch(request(), env)).status).toBe(204);
+      expect(sql.prepare('SELECT * FROM daily_events').all()).toEqual([
+        { day: '2026-09-06', source: 'instagram', medium: 'bio', event: 'page_view', count: 2 },
+      ]);
+    } finally { sql.close(); vi.useRealTimers(); }
   });
   it.each([
     { source: 'instagram', medium: 'bio', event: 'page_view', email: 'private@example.com' },

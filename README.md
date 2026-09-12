@@ -1,70 +1,75 @@
 # 沖縄介護センター Web基盤
 
-採用ページを起点に、企業サイトと将来のサービスへ展開するpnpmモノレポ。フロントエンドはAstro＋TypeScript＋Tailwind CSS 4、配信・APIはCloudflare Workers＋TypeScriptです。
+採用サイトと社内ダッシュボードをまとめたpnpmモノレポです。コンテンツはAstro、管理画面はReact＋Vite、APIはHono＋Cloudflare Workers、保存にD1、通知にResend APIを使用します。
 
-[jnlmyz/junabel PR #2](https://github.com/jnlmyz/junabel/pull/2) の `nursing/website` をこのリポジトリのルートへ移行しました。旧HTMLサイト・仕様資料・開発設定は [`archive/legacy-2026-09-07/`](archive/legacy-2026-09-07/) に保存しています。移行元のコミットと構成の違いは [移行記録](docs/migration.md) を参照してください。
+## ローカル起動
 
-## 起動
-
-Node.js 22.12以上（推奨24 LTS）、pnpm 9.15.4を使用します。
-
-nodenv等を使うローカル環境向けに、`.node-version` でNode 24.7.0を指定しています。該当バージョンが未導入の場合は、先にバージョン管理ツールでインストールしてください。
+Node.js 24（`.node-version` は24.7.0）、pnpm 9.15.4を使用します。初回のみ設定ファイルをコピーしてください。既存ファイルには上書きしません。
 
 ```sh
-# このリポジトリのルートで実行
 pnpm install --frozen-lockfile
-pnpm dev
+cp -n apps/recruit/.env.example apps/recruit/.env
+cp -n apps/api/.dev.vars.example apps/api/.dev.vars
 ```
 
-採用ページは `http://127.0.0.1:4321/`、デザインガイドは `/design/`、画像付きの撮影依頼メモは `/photo-brief/`。この環境のAstro 7のdevサーバーはバックグラウンドで継続します。終了は `pnpm --filter @okinawa-care/recruit exec astro dev stop`。
+`apps/recruit/.env` の `PUBLIC_CONSULTATION_ENABLED=true` を設定して起動します。
 
 ```sh
-pnpm lint:styles # 共通テーマ・余白ルールの検査
-pnpm check      # スタイル検査とAstro・Workerの型チェック
-pnpm test       # 認証・流入元・フォームURL・計測APIの検証
-pnpm build      # 静的HTMLと最適化した画像を生成
-pnpm preview    # ビルド後、Workersで配信 http://127.0.0.1:8787
+pnpm db:migrate:local
+pnpm preview
 ```
 
-`pnpm dev` は画面開発用です。認証・API・配信ヘッダー・404は `cp apps/edge/.dev.vars.example apps/edge/.dev.vars` でローカル専用認証情報を用意し、`pnpm preview` で確認します。認証ダイアログには `.dev.vars` のID・パスワードを入力します。別のプロジェクトの依存関係やデプロイ設定には依存しません。
+| 画面 | URL・起動方法 |
+| --- | --- |
+| 採用サイト・相談フォーム | http://127.0.0.1:8787/ |
+| 社内ダッシュボード | http://127.0.0.1:8788/ |
+| 共通デザインガイド（ローカル専用） | `pnpm dev:design` → http://127.0.0.1:4324/ |
+
+`pnpm preview` のサイトと管理画面はBasic認証なしで開けます。認証の省略はローカル専用Workerのループバック接続に限り、本番用Workerでは常に認証します。ローカルでは受付側と管理側のHonoアプリを一つのWorkerで動かし、同じD1を参照します。管理画面への接続はローカル専用プロキシが担当し、外部には公開しません。サンプル設定ではTurnstileの検証省略はループバックでのみ有効です。Resend未設定でも相談を保存でき、管理画面には「通知未設定」と表示します。
+
+ポートが使用中なら `PREVIEW_PORT=8789 pnpm preview` のように変更できます。
+
+`pnpm dev`（4322）・`pnpm dev:dashboard`（4323）は画面編集用で、APIと認証は動きません。保存・管理操作は `pnpm preview` で確認します。Astroの開発サーバーは対象アプリで `pnpm exec astro dev stop`、Viteの開発サーバーは起動したターミナルのCtrl+Cで終了します。
+
+```sh
+pnpm lint   # ESLint・Stylelint
+pnpm check  # Lint・全アプリの型チェック
+pnpm test   # 認証・入力検証・実際のSQLiteによる保存・更新・通知再試行
+pnpm build  # 3画面をビルドし、公開用成果物にガイドがないことを検査
+```
+
+Reactの状態・Effectと、DrizzleによるDB処理の書き方は [コード品質の方針](docs/code-quality.md) にまとめています。ESLintは警告も失敗扱いとし、CIで同じ検査を実行します。
 
 ## 構成
 
-| 場所 | 責務 |
+| 場所 | 役割 |
 | --- | --- |
-| `apps/recruit` | 採用ページ、問い合わせ導線、SEO、レスポンシブ表示 |
-| `apps/edge` | Basic認証、静的ファイル配信、件数集計API、D1マイグレーション |
-| `packages/ui` | 色・文字・余白、Brand・Button・Iconの共通コンポーネント |
-| `packages/content` | 会社情報、職種、FAQ、流入元の型とフォームURL生成 |
-| `tests` | データを扱う境界のテスト |
-| `docs` | 設計判断、公開・フォーム設定、掲載情報と写真の出典 |
-| `archive` | 移行前のサイト・仕様資料。ビルド・配信の対象外 |
+| `apps/recruit` | 採用ページ、専用の参加相談フォーム、プライバシー、撮影依頼メモ |
+| `apps/dashboard` | React＋Viteによる社内ダッシュボード。概要、採用の参加相談・検索・対応状況・担当者メモ |
+| `apps/api` | Honoによる公開側と管理側のWorker、認証、D1保存、Resend API、マイグレーション |
+| `apps/design` | 共通部品を表示するローカル専用ガイド。デプロイ対象外 |
+| `packages/ui` | 色・書体・余白、Brand・Button・Icon・SelectField・TextField |
+| `packages/contracts` | フォームの項目・選択肢、APIの型と入力検証 |
+| `packages/content` | 会社情報、職種、FAQ、流入元の分類 |
+| `docs` | 設計、公開手順、スタイル、原稿・写真の出典 |
+| `archive` | 旧サイト・資料。ビルド・配信対象外 |
 
-ページ全体を巨大な共有コンポーネントにせず、複数のサイトで使う基礎だけを共有します。企業サイト追加時は `apps/corporate` を追加し、同じパッケージを参照します。将来の業務アプリは別のアプリ・Worker・DBとして追加できます。
+共通デザインの実体は `packages/ui` に置きます。ガイドはその部品を読み込む独立アプリです。採用サイトの `/design/` は削除し、公開用Workerは `apps/recruit/dist` と `apps/dashboard/dist` だけを配信します。
 
-## 実装済み
+## 受付と公開準備
 
-- 採用1ページ：理念、職場環境、3職種の開閉式紹介、旅行の支援、Instagram、FAQ、説明会・見学相談、会社情報
-- スマホ固定CTA、開閉メニュー、キーボード操作、スキップリンク、reduced-motion対応
-- Googleフォームで説明会・見学の相談を受付。希望職種・次のステップ・流入元を引き継ぐ予約導線
-- Cookie・ユーザーIDを使用しない日次件数集計API。初期状態は無効
-- canonical、OGP、sitemap、robots、プライバシーページ、404、ローカルフォント、WebP画像
-- Tailwindの共通テーマで色・文字サイズ・4px単位の余白を統一。ボタン・選択欄を共有し、Stylelintでルールを検査。[スタイルの統一ルール](docs/styling.md)を参照
-- `/design/` で実装と同じテーマ色・コンポーネント・無効状態を確認できるデザインガイド
-- ヒーローは当初の大きな写真1枚。ページ全体の実写撮影に向けた、画像付きの撮影依頼メモ `/photo-brief/`
-- GitHub Actionsによる型チェック・テスト・ビルド・Wranglerドライラン。`main` への対象ファイルのpush時は成功後にWorkersへ自動デプロイ（APIトークンと閲覧用ID・パスワードのSecretsが必要）
+入口は「説明会への参加相談」。氏名・メール・気になっている仕事・同意は必須、年齢層・性別・都合のよい日時・聞きたいことは任意です。流入元・掲載場所はURLの既知の分類を自動で引き継ぎ、入力欄には表示しません。Googleフォーム・スプレッドシートへの接続は使用しません。既存のGoogle上の回答は変更していません。
 
-## 現在の公開準備状況
+本番の予定URLは `recruit.okinawakaigo.com` と `dashboard.okinawakaigo.com`。制作確認中のサイトと管理画面は別のBasic認証で保護し、noindexとキャッシュ禁止を維持します。相談内容はD1に保存し、Resendの担当者通知には受付番号と管理画面のリンクだけを含めます。メール失敗時も相談は残ります。
 
-公開・更新はGitHub ActionsからCloudflare Workersへ行います。制作確認中はBasic認証とnoindexを維持します。Googleフォーム・スプレッドシートは未作成です。
+本番D1、管理者認証、Turnstile、Resendの設定が必要です。CIは検証を常時実行し、`DEPLOY_ENABLED=true` のときだけ `main` からデプロイします。未設定のデータベースIDで公開しないよう事前検査を行います。ガイドの公開先は設けません。
 
-- **予約フォーム未設定**：「受付準備中」と表示し、入力・送信を無効にしています。電話相談は受け付けません。公開前にフォームURLと事前入力項目のIDを設定してください。
-- **給与等は未確認**：過去の議事録に誤記の記録があるため転載していません。現状は条件を問い合わせる表示です。確定後、職種データへ募集条件を追加してください。
-- **人物写真**：ヒーローは当初のイメージ写真を仮使用。撮影依頼ページにはAI生成の参考画像を明示して掲載しています。[撮影依頼メモ](docs/photography-brief.md)に沿って実写を撮影し、ヒーローと本文の写真を整えます。
-- **ロゴ**：新しいマークの提案。既存の正式ロゴの改変ではありません。
-- **限定公開**：公開先は `https://recruit.okinawakaigo.com/`。共有ID・パスワードのBasic認証で全ページ・画像・APIを保護します。認証情報が未設定なら503を返します。`workers.dev` とプレビューURLは無効です。
-- **検索登録**：CIでnoindexを固定し、認証画面を含む全レスポンスに `X-Robots-Tag` と `Cache-Control: private, no-store` を付けています。デプロイにはGitHub Secretsの `BASIC_AUTH_USERNAME` と `BASIC_AUTH_PASSWORD` が必要です。
+給与・勤務条件は未確定のため数値を掲載していません。ヒーローはイメージ写真、撮影依頼メモはAI生成の参考画像です。原稿・写真は引き続き確認が必要です。提案していた新ロゴは不採用とし、会社名を文字で表示しています。
 
-運用手順は [deployment.md](docs/deployment.md)、設計判断は [architecture.md](docs/architecture.md)、素材・原稿の確認箇所は [content-sources.md](docs/content-sources.md) を参照してください。
+詳しくは [公開手順](docs/deployment.md)、[設計](docs/architecture.md)、[スタイル](docs/styling.md)、[出典](docs/content-sources.md) を参照してください。旧 `jnlmyz/junabel` からの移行履歴は [移行記録](docs/migration.md) に保存しています。
 
-ヒーローはユーザーの指定により当初の1枚構成へ戻しました。会社の雰囲気はページ全体の写真で伝える方針です。[81webの事例研究と決定内容](docs/design-research-81web.md)に、採用専用サイト6件の構成比較と経緯を記録しています。
+## ダッシュボード
+
+`apps/dashboard` は会社全体の業務を管理するReact＋Viteアプリです。概要から対応状況を確認し、サイドバーの「採用 → 参加相談」で検索・絞り込み・詳細の編集ができます。未保存の変更がある移動時は確認を表示します。メールの旧形式の詳細リンクも引き続き使用できます。
+
+画面のみの開発は `pnpm dev:dashboard`（4323）、APIを含む動作確認は `pnpm preview`（8788）。採用サイトへのリンクをローカルに向ける場合は `apps/dashboard/.env.example` を `.env.local` にコピーし、`VITE_RECRUIT_URL` を起動中のURLに合わせます。ローカル起動に `ADMIN_USERNAME` / `ADMIN_PASSWORD` の設定は不要です。画面設計は [docs/dashboard-design.md](docs/dashboard-design.md) を参照してください。

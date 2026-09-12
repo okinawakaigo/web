@@ -1,0 +1,46 @@
+---
+import "@fontsource-variable/noto-sans-jp";
+import "@fontsource-variable/noto-serif-jp";
+import "@fontsource-variable/dm-sans";
+import "../styles/global.css";
+import Brand from "@okinawa-care/ui/Brand.astro";
+import Button from "@okinawa-care/ui/Button.astro";
+import SelectField from "@okinawa-care/ui/SelectField.astro";
+import TextField from "@okinawa-care/ui/TextField.astro";
+const colors = [
+  ['Primary', '深緑。主な操作とブランドの軸。', 'bg-primary', '#136c60'],
+  ['Ink', '長い文章も読みやすく。', 'bg-ink', '#203e3a'],
+  ['Mist', '控えめな面の区切り。', 'bg-mist', '#edf5f1'],
+  ['Sand', '落ち着いた画面の背景。', 'bg-sand', '#f6f6f0'],
+  ['Sun', '必要なところに、小さな明るさ。', 'bg-sun', '#ecda8a'],
+  ['Error', '入力の修正が必要な場所。', 'bg-error', '#a53232'],
+];
+---
+<!doctype html><html lang="ja">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex,nofollow" /><title>共通デザインガイド｜沖縄介護センター</title></head>
+  <body>
+    <header class="content-container flex flex-wrap items-center justify-between gap-4 py-6"><Brand /><span class="text-caption text-muted">ローカル専用 · 共通デザインガイド</span></header>
+    <main>
+      <section class="bg-primary-dark text-paper py-section"><div class="content-container"><p class="text-body text-inverse-muted">沖縄介護センターのデザイン</p><h1 class="font-display text-hero mt-5">人を想う、<br />使いやすさを。</h1><p class="text-base text-inverse-muted max-w-description mt-6">採用サイトから日々の管理画面まで。色、文字、操作の手触りをそろえ、必要なことが自然に伝わる画面をつくります。</p><nav class="flex flex-wrap gap-6 mt-10 text-body"><a href="#color">色</a><a href="#type">文字</a><a href="#controls">操作</a><a href="#forms">入力と状態</a><a href="#rules">使い分け</a></nav></div></section>
+      <div class="content-container">
+        <section id="color" class="guide-section"><div class="guide-heading"><h2>島の暮らしになじむ色</h2><p>白を広く、深緑を要所に。装飾より、意味を伝えるために色を使います。</p></div><div class="grid grid-cols-3 gap-6 max-md:grid-cols-2 max-xs:grid-cols-1">{colors.map(([name,description,color,hex]) => <figure><div class:list={[color, 'h-28 rounded-card border border-line']}></div><figcaption class="mt-3"><div class="flex justify-between gap-3"><strong class="font-latin text-base">{name}</strong><code class="text-caption text-muted">{hex}</code></div><p class="text-body text-muted mt-1">{description}</p></figcaption></figure>)}</div></section>
+        <section id="type" class="guide-section"><div class="guide-heading"><h2>言葉に、落ち着いた輪郭を</h2><p>見出しは明朝、本文と操作はゴシック。読みやすさと温かさを両立します。</p></div><div class="grid grid-cols-2 gap-10 max-md:grid-cols-1"><div><p class="text-caption text-muted mb-4">Noto Serif JP · 見出し</p><p class="font-display text-section">誰かの毎日も、<br />あなたの毎日も、大切に。</p></div><div><p class="text-caption text-muted mb-4">Noto Sans JP · 本文と操作</p><p class="text-base leading-prose">応募するか決めていなくても、お気軽にご相談ください。仕事内容や働き方について、気になることをお聞きします。</p><p class="font-latin text-title mt-6">Okinawa, our home.</p></div></div></section>
+        <section id="controls" class="guide-section"><div class="guide-heading"><h2>次の動きが分かる操作</h2><p>押した後に何が起きるかを、短い言葉で伝えます。</p></div><div class="flex flex-wrap gap-4"><Button href="#forms">説明会への参加相談</Button><Button href="#type" variant="outline">仕事を知る</Button><Button as="button" disabled icon={false}>受付準備中</Button></div><p class="text-body text-muted mt-6">標準の操作領域は高さ56px。キーボードのフォーカス、無効状態、スマートフォンでの押しやすさを共通部品でそろえます。</p></section>
+        <section id="forms" class="guide-section"><div class="guide-heading"><h2>迷わず入力できること</h2><p>必須と任意を明示し、説明は項目の近くに。エラー時も入力内容を残します。</p></div><div class="grid grid-cols-2 gap-10 max-md:grid-cols-1"><div class="bg-sand rounded-panel p-panel"><TextField id="sample-name" label="お名前（氏名）〈必須〉" placeholder="例：沖縄 花子" /><SelectField id="sample-role" label="気になっている仕事〈必須〉"><option>その他</option><option>ヘルパー</option><option>ケアマネジャー</option><option>相談員</option></SelectField><p class="text-caption text-muted mt-2">迷っている方は「その他」を選んでください。</p><TextField id="sample-questions" label="説明会で聞きたいこと〈任意〉" multiline rows={3} /></div><div><h3 class="text-title">入力の修正</h3><TextField id="sample-error" label="メールアドレス〈必須〉" value="example" aria-invalid="true" aria-describedby="sample-message" /><p id="sample-message" class="field-error">メールアドレスの形式を確認してください。</p><h3 class="text-title mt-8">受付完了</h3><div class="bg-mist rounded-card p-6 mt-4"><p class="text-subtitle font-semibold">参加相談を受け付けました</p><p class="text-body mt-3">担当者からメールで日程をご案内します。日程は担当者との調整後に確定します。</p></div></div></div></section>
+        <section class="guide-section"><div class="guide-heading"><h2>業務の状態を見分ける</h2><p>ダッシュボードでは色と文言を組み合わせて対応状況を伝えます。色だけに意味を持たせません。</p></div><div class="flex flex-wrap gap-4"><span class="status-badge status-badge--attention">未対応</span><span class="status-badge status-badge--progress">連絡済み</span><span class="status-badge status-badge--scheduled">日程確定</span><span class="status-badge status-badge--complete">対応完了</span></div><p class="text-body text-muted mt-6">操作が多い業務画面は高さ44pxのコンパクトなボタンを使用。採用サイトの入力欄とボタンは標準56pxです。</p></section>
+        <section id="rules" class="guide-section"><div class="guide-heading"><h2>共通にするもの、画面で決めるもの</h2><p>部品を共用しながら、それぞれの画面の目的に合わせて配置します。</p></div><dl class="rules"><div><dt>共通デザイン</dt><dd>色・書体・4px単位の余白・ボタン・入力欄・フォーカス表示。実体は packages/ui。</dd></div><div><dt>採用サイト</dt><dd>写真と言葉で仕事を知り、説明会への参加相談に進むための配置。</dd></div><div><dt>ダッシュボード</dt><dd>会社全体の業務を切り替えるサイドバーと、検索・一覧・詳細の配置。見出しもゴシック体を使い、日々の作業に適した密度に整えます。</dd></div><div><dt>このガイド</dt><dd>共通部品を実際に読み込む確認用アプリ。公開用Workerには含めません。</dd></div></dl></section>
+      </div>
+    </main><footer class="content-container border-t border-line py-8 text-caption text-muted">沖縄介護センター · 共通デザインガイド</footer>
+  </body></html>
+<style>
+  @reference "@okinawa-care/ui/styles.css";
+  @layer components {
+    .guide-section { @apply py-16 border-b border-line; }
+    .guide-heading { @apply mb-8 max-w-reading; }
+    .guide-heading h2 { @apply font-display text-section; }
+    .guide-heading p { @apply text-body text-muted mt-4; }
+    .rules > div { @apply grid grid-cols-3 gap-6 py-5 border-t border-line; }
+    .rules dt { @apply text-body font-semibold; }
+    .rules dd { @apply col-span-2 text-body text-muted m-0; }
+  }
+</style>
