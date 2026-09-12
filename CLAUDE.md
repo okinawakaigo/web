@@ -11,7 +11,7 @@
 - `packages/ui`: 共通トークンと操作部品。`packages/contracts`: APIの型・項目・検証。`packages/content`: 原稿と流入分類。
 - 入口は「説明会への参加相談」。専用フォームからD1に保存する。Googleフォーム・Sheets APIは使わず、採用の電話リンクは設けない。
 - 年齢層・性別は任意。流入元と掲載場所は入力欄を設けず、既知のURLパラメータだけを相談に付加する。管理画面で確認できる。
-- 採用サイトの制作確認用Basic認証と管理者用Basic認証を分ける。未設定時は配信を閉じる。全静的ファイルとAPIを認証し、noindex・キャッシュ禁止を付ける。
+- 本番では採用サイトの制作確認用Basic認証と管理者用Basic認証を分ける。未設定時は配信を閉じる。全静的ファイルとAPIを認証し、noindex・キャッシュ禁止を付ける。`pnpm preview` はローカル専用Workerのループバック接続に限りBasic認証を省略する。
 - 秘密情報はWorker Secrets・GitHub Actions Secrets・Git管理対象外の `.dev.vars` に置く。`PUBLIC_*` に含めない。
 - D1保存後、担当者にResend APIで通知する。メール本文は受付番号と認証必須の管理画面リンクのみ。失敗しても相談の保存を維持する。
 - ローカルのTurnstile検証省略はループバック限定。本番の受付にはTurnstileとレート制限が必要。

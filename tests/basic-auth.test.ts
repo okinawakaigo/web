@@ -109,7 +109,7 @@ describe('Basic認証', () => {
     expectPrivate(response);
   });
 
-  it('ローカルHTTPでも認証は必須', async () => {
+  it('本番用WorkerはローカルHTTPでも認証を省略しない', async () => {
     const { env } = bindings();
     expect((await worker.fetch(new Request('http://127.0.0.1:8787/'), env)).status).toBe(401);
     expect((await worker.fetch(new Request('http://127.0.0.1:8787/', { headers: { Authorization: authorization() } }), env)).status).toBe(200);

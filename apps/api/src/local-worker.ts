@@ -1,8 +1,10 @@
-import recruit, { type Env } from './index';
-import dashboard, { type DashboardEnv } from './dashboard-worker';
+import { createRecruitApp, type Env } from './index';
+import { createDashboardApp, type DashboardEnv } from './dashboard-worker';
 import { loopback } from './http';
 
 type LocalEnv = Env & DashboardEnv;
+const recruit = createRecruitApp({ localPreview: true });
+const dashboard = createDashboardApp({ localPreview: true });
 // One local runtime and one asset binding avoid collisions between app previews.
 // This entrypoint is never included in a production deployment.
 function scopedAssets(assets: Fetcher, prefix: string): Fetcher {
@@ -22,7 +24,8 @@ function scopedAssets(assets: Fetcher, prefix: string): Fetcher {
 export default {
   fetch(request: Request, env: LocalEnv, ctx: ExecutionContext): Response | Promise<Response> {
     const url = new URL(request.url);
-    if (!loopback(url)) return new Response('Local preview only', { status: 403 });
+    const host = request.headers.get('Host');
+    if (!loopback(url) || (host && !/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host))) return new Response('Local preview only', { status: 403 });
     if (request.headers.get('x-local-app') === 'dashboard') {
       const origin = new URL(request.headers.get('x-local-origin') ?? request.url);
       if (!loopback(origin) || origin.protocol !== 'http:') return new Response('Local preview only', { status: 403 });

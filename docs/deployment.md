@@ -9,7 +9,7 @@
 | ファイル | 設定 |
 | --- | --- |
 | `apps/recruit/.env` | `PUBLIC_CONSULTATION_ENABLED=true`。Turnstile site keyはローカルでは空で可 |
-| `apps/api/.dev.vars` | サイト用 `BASIC_AUTH_*`、管理用 `ADMIN_*`、`CONSULTATION_ENABLED=true`、`LOCAL_FORM_TEST=true` |
+| `apps/api/.dev.vars` | `CONSULTATION_ENABLED=true`、`LOCAL_FORM_TEST=true`。ローカル起動では認証情報は不要 |
 | 同上のResend設定 | 空なら送信しない。保存された相談は「通知未設定」と表示 |
 
 ```sh
@@ -20,7 +20,7 @@ pnpm preview
 pnpm dev:design
 ```
 
-サイト `127.0.0.1:8787`・管理画面 `127.0.0.1:8788`はそれぞれの認証情報で開きます。ガイドは http://127.0.0.1:4324/ です。ローカルでは受付側と管理側のHonoアプリを一つのWorkerで動かし、`apps/api/.wrangler/state` の同じD1を使います。別プロセスで同じDBを開くと競合するため、`pnpm preview` でまとめて起動します。`wrangler.local.jsonc` はローカル専用でデプロイしません。サイトと管理画面のビルド成果物だけを `.wrangler/preview-assets` にコピーして配信します。画面を変更したら `pnpm preview` を起動し直してください。本番データには接続しません。相談本文、メモ、メールアドレス等をログに出さない実装です。
+サイト `127.0.0.1:8787`・管理画面 `127.0.0.1:8788`はBasic認証なしで開けます。認証の省略はローカル専用Workerのループバック接続に限り、本番用Workerでは常に認証します。ガイドは http://127.0.0.1:4324/ です。ローカルでは受付側と管理側のHonoアプリを一つのWorkerで動かし、`apps/api/.wrangler/state` の同じD1を使います。別プロセスで同じDBを開くと競合するため、`pnpm preview` でまとめて起動します。`wrangler.local.jsonc` はローカル専用でデプロイしません。サイトと管理画面のビルド成果物だけを `.wrangler/preview-assets` にコピーして配信します。画面を変更したら `pnpm preview` を起動し直してください。本番データには接続しません。相談本文、メモ、メールアドレス等をログに出さない実装です。
 
 `pnpm dev` と `pnpm dev:dashboard` は画面開発のみでAPIは動きません。フォームは接続先の準備を確認できない場合、入力・送信を無効にします。ローカルの検証省略は `localhost`・`127.0.0.1`・`[::1]` のみで、本番ホストには適用されません。
 

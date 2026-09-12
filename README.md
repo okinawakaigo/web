@@ -25,7 +25,7 @@ pnpm preview
 | 社内ダッシュボード | http://127.0.0.1:8788/ |
 | 共通デザインガイド（ローカル専用） | `pnpm dev:design` → http://127.0.0.1:4324/ |
 
-サイトには `.dev.vars` の `BASIC_AUTH_*`、管理画面には `ADMIN_*` でログインします。ローカルでは受付側と管理側のHonoアプリを一つのWorkerで動かし、同じD1を参照します。管理画面への接続はローカル専用プロキシが担当し、外部には公開しません。サンプル設定ではTurnstileの検証省略はループバックでのみ有効です。Resend未設定でも相談を保存でき、管理画面には「通知未設定」と表示します。
+`pnpm preview` のサイトと管理画面はBasic認証なしで開けます。認証の省略はローカル専用Workerのループバック接続に限り、本番用Workerでは常に認証します。ローカルでは受付側と管理側のHonoアプリを一つのWorkerで動かし、同じD1を参照します。管理画面への接続はローカル専用プロキシが担当し、外部には公開しません。サンプル設定ではTurnstileの検証省略はループバックでのみ有効です。Resend未設定でも相談を保存でき、管理画面には「通知未設定」と表示します。
 
 ポートが使用中なら `PREVIEW_PORT=8789 pnpm preview` のように変更できます。
 
@@ -69,4 +69,4 @@ pnpm build  # 3画面をビルドし、公開用成果物にガイドがない�
 
 `apps/dashboard` は会社全体の業務を管理するReact＋Viteアプリです。概要から対応状況を確認し、サイドバーの「採用 → 参加相談」で検索・絞り込み・詳細の編集ができます。未保存の変更がある移動時は確認を表示します。メールの旧形式の詳細リンクも引き続き使用できます。
 
-画面のみの開発は `pnpm dev:dashboard`（4323）、APIを含む動作確認は `pnpm preview`（8788）。採用サイトへのリンクをローカルに向ける場合は `apps/dashboard/.env.example` を `.env.local` にコピーし、`VITE_RECRUIT_URL` を起動中のURLに合わせます。認証用の既存 `ADMIN_USERNAME` / `ADMIN_PASSWORD` はそのまま使います。画面設計は [docs/dashboard-design.md](docs/dashboard-design.md) を参照してください。
+画面のみの開発は `pnpm dev:dashboard`（4323）、APIを含む動作確認は `pnpm preview`（8788）。採用サイトへのリンクをローカルに向ける場合は `apps/dashboard/.env.example` を `.env.local` にコピーし、`VITE_RECRUIT_URL` を起動中のURLに合わせます。ローカル起動に `ADMIN_USERNAME` / `ADMIN_PASSWORD` の設定は不要です。画面設計は [docs/dashboard-design.md](docs/dashboard-design.md) を参照してください。

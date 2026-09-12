@@ -1,8 +1,5 @@
-# ローカル専用。本番には別の資格情報を設定する。
-BASIC_AUTH_USERNAME=recruit
-BASIC_AUTH_PASSWORD=local-preview-only-change-me
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=local-admin-only-change-me
+# ローカル専用。pnpm previewではBasic認証の設定は不要。
+# 本番用Workerの認証情報はWorker Secretsで設定する。
 CONSULTATION_ENABLED=true
 # localhost/127.0.0.1でのみTurnstileを省略。本番では必ずfalse。
 LOCAL_FORM_TEST=true

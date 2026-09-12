@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import recruit, { type Env } from '../apps/api/src/index';
 import admin, { type DashboardEnv } from '../apps/api/src/dashboard-worker';
+import localWorker from '../apps/api/src/local-worker';
 import { notifyConsultation } from '../apps/api/src/mail';
 import { parseConsultation } from '../packages/contracts/src/consultations';
 
@@ -45,6 +46,78 @@ function request(path = '/api/consultations', body?: unknown, auth = previewAuth
 async function send(body: unknown = input) { return recruit.fetch(request('/api/consultations', body), env); }
 async function manage(path = '/api/consultations', body?: unknown, method?: string) { return admin.fetch(request(path, body, adminAuth, 'http://127.0.0.1:8788', method), adminEnv); }
 const count = () => (sql.prepare('SELECT COUNT(*) AS n FROM consultations').get() as { n: number }).n;
+
+describe('ローカル専用プレビュー', () => {
+  async function preview(incoming: Request, dashboard = false) {
+    const url = new URL(incoming.url);
+    if (dashboard) url.host = '127.0.0.1:8787';
+    const forwarded = new Request(url, incoming);
+    forwarded.headers.delete('Authorization');
+    if (dashboard) {
+      forwarded.headers.set('x-local-app', 'dashboard');
+      forwarded.headers.set('x-local-origin', new URL(incoming.url).origin);
+    }
+    const pending: Promise<unknown>[] = [];
+    const response = await localWorker.fetch(forwarded, {
+      ASSETS: env.ASSETS, DB: env.DB, CONSULTATION_ENABLED: 'true', LOCAL_FORM_TEST: 'true',
+    }, { waitUntil: (task: Promise<unknown>) => pending.push(task) } as unknown as ExecutionContext);
+    await Promise.all(pending);
+    return response;
+  }
+
+  it.each([false, true])('認証情報の設定なしで画面と静的ファイルを開ける（管理画面=%s）', async dashboard => {
+    for (const path of ['/', '/assets/app.js']) {
+      const response = await preview(new Request(`http://127.0.0.1:8788${path}`), dashboard);
+      expect(response.status).toBe(200);
+      expect(response.headers.has('WWW-Authenticate')).toBe(false);
+      expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+      expect(response.headers.get('X-Robots-Tag')).toContain('noindex');
+      const assetRequest = assetFetch.mock.lastCall![0] as Request;
+      expect(new URL(assetRequest.url).pathname).toBe(`/${dashboard ? 'dashboard' : 'recruit'}${path}`);
+    }
+  });
+
+  it('認証なしで相談を保存・閲覧・更新でき、別Originからの更新は拒否する', async () => {
+    expect((await preview(request('/api/consultations', input))).status).toBe(201);
+    const manageLocal = (path: string, body?: unknown, method?: string) => preview(request(path, body, '', 'http://127.0.0.1:8788', method), true);
+    const listing = await (await manageLocal('/api/consultations')).json();
+    expect(listing.items).toHaveLength(1);
+    const path = `/api/consultations/${id}`;
+    expect(await (await manageLocal(path)).json()).toMatchObject({ name: input.name });
+    const update = { status: '連絡済み', note: 'ローカルで確認', revision: 0 };
+    const crossOrigin = request(path, update, '', 'http://127.0.0.1:8788', 'PATCH');
+    crossOrigin.headers.set('Origin', 'https://other.example');
+    expect((await preview(crossOrigin, true)).status).toBe(403);
+    expect((await manageLocal(path, update, 'PATCH')).status).toBe(200);
+    expect(await (await manageLocal(path)).json()).toMatchObject({ ...update, revision: 1 });
+  });
+
+  it.each(['https://dashboard.okinawakaigo.com', 'http://192.168.1.10', 'http://localhost.example.com'])(
+    'ローカル専用Workerは外部ホストと外部の転送先を拒否する: %s', async origin => {
+      expect((await preview(new Request(`${origin}/api/consultations`))).status).toBe(403);
+      expect((await preview(new Request(`${origin}/api/consultations`), true)).status).toBe(403);
+      expect(assetFetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it('本番用Workerではローカル用ヘッダーを送っても認証を回避できない', async () => {
+    const limiter = { limit: vi.fn().mockResolvedValue({ success: true }) } as unknown as RateLimit;
+    for (const origin of ['http://127.0.0.1:8788', 'https://dashboard.okinawakaigo.com']) {
+      for (const path of ['/', '/assets/app.js', '/api/consultations']) {
+        const req = new Request(origin + path, { headers: { 'x-local-app': 'dashboard', 'x-local-origin': 'http://127.0.0.1:8788' } });
+        expect((await recruit.fetch(req, env)).status).toBe(401);
+        expect((await admin.fetch(req, { ...adminEnv, ADMIN_RATE_LIMITER: limiter })).status).toBe(401);
+      }
+    }
+    expect(assetFetch).not.toHaveBeenCalled();
+  });
+
+  it('開発サーバーがURLを書き換えても外部のHostヘッダーを拒否する', async () => {
+    const req = new Request('http://127.0.0.1:8787/', { headers: { Host: 'external.example.invalid' } });
+    expect((await preview(req)).status).toBe(403);
+    expect(assetFetch).not.toHaveBeenCalled();
+  });
+});
 
 describe('参加相談の保存と入力検証', () => {
   it('同じ受付番号・内容を再送しても一件だけ保存し、異なる内容なら競合にする', async () => {
