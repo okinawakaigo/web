@@ -2,6 +2,12 @@ export class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 export const loopback = (url: URL) => ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+/** True when the request URL and the raw Host header both name a loopback address. */
+export function loopbackRequest(request: Request): boolean {
+  const host = request.headers.get('Host');
+  try { return loopback(new URL(request.url)) && (host === null || loopback(new URL(`http://${host}`))); }
+  catch { return false; }
+}
 export async function jsonBody(request: Request, maxBytes = 16384): Promise<unknown> {
   if (request.headers.get('Origin') !== new URL(request.url).origin) throw new HttpError(403, 'この画面から送信し直してください。');
   if (request.headers.get('Content-Type')?.split(';')[0].trim() !== 'application/json') throw new HttpError(415, '送信形式を確認してください。');

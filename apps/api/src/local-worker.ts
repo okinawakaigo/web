@@ -1,6 +1,6 @@
 import { createRecruitApp, type Env } from './index';
 import { createDashboardApp, type DashboardEnv } from './dashboard-worker';
-import { loopback } from './http';
+import { loopback, loopbackRequest } from './http';
 
 type LocalEnv = Env & DashboardEnv;
 const recruit = createRecruitApp({ localPreview: true });
@@ -21,14 +21,14 @@ function scopedAssets(assets: Fetcher, prefix: string): Fetcher {
     },
   } as Fetcher;
 }
+const localOnly = () => new Response('Local preview only', { status: 403 });
 export default {
   fetch(request: Request, env: LocalEnv, ctx: ExecutionContext): Response | Promise<Response> {
+    if (!loopbackRequest(request)) return localOnly();
     const url = new URL(request.url);
-    const host = request.headers.get('Host');
-    if (!loopback(url) || (host && !/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host))) return new Response('Local preview only', { status: 403 });
     if (request.headers.get('x-local-app') === 'dashboard') {
       const origin = new URL(request.headers.get('x-local-origin') ?? request.url);
-      if (!loopback(origin) || origin.protocol !== 'http:') return new Response('Local preview only', { status: 403 });
+      if (!loopback(origin) || origin.protocol !== 'http:') return localOnly();
       url.host = origin.host;
       const forwarded = new Request(url, request);
       forwarded.headers.delete('x-local-app'); forwarded.headers.delete('x-local-origin');

@@ -6,6 +6,7 @@ import admin, { type DashboardEnv } from '../apps/api/src/dashboard-worker';
 import localWorker from '../apps/api/src/local-worker';
 import { notifyConsultation } from '../apps/api/src/mail';
 import { parseConsultation } from '../packages/contracts/src/consultations';
+import { expectPrivate } from './helpers';
 
 const id = 'a74608c1-36aa-4c08-9a99-f9d0ca8e54e9';
 const input = { id, name: '動作確認', email: 'test@example.invalid', role: 'その他', ageGroup: '', gender: '', availability: '平日午後', questions: '', source: 'instagram', medium: 'bio', consent: true };
@@ -44,18 +45,22 @@ function request(path = '/api/consultations', body?: unknown, auth = previewAuth
   return new Request(origin + path, { method, headers: { Authorization: auth, Origin: origin, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
 }
 async function send(body: unknown = input) { return recruit.fetch(request('/api/consultations', body), env); }
-async function manage(path = '/api/consultations', body?: unknown, method?: string) { return admin.fetch(request(path, body, adminAuth, 'http://127.0.0.1:8788', method), adminEnv); }
+const adminRequest = (path = '/api/consultations', body?: unknown, method?: string) => request(path, body, adminAuth, 'http://127.0.0.1:8788', method);
+async function manage(path?: string, body?: unknown, method?: string) { return admin.fetch(adminRequest(path, body, method), adminEnv); }
 const count = () => (sql.prepare('SELECT COUNT(*) AS n FROM consultations').get() as { n: number }).n;
 
 describe('ローカル専用プレビュー', () => {
+  // Mirrors scripts/preview.mjs: the browser sends no credentials, and the dashboard proxy
+  // rewrites Host to the Wrangler port while forwarding the browser origin in a header.
   async function preview(incoming: Request, dashboard = false) {
     const url = new URL(incoming.url);
+    const { origin } = url;
     if (dashboard) url.host = '127.0.0.1:8787';
     const forwarded = new Request(url, incoming);
     forwarded.headers.delete('Authorization');
     if (dashboard) {
       forwarded.headers.set('x-local-app', 'dashboard');
-      forwarded.headers.set('x-local-origin', new URL(incoming.url).origin);
+      forwarded.headers.set('x-local-origin', origin);
     }
     const pending: Promise<unknown>[] = [];
     const response = await localWorker.fetch(forwarded, {
@@ -70,8 +75,7 @@ describe('ローカル専用プレビュー', () => {
       const response = await preview(new Request(`http://127.0.0.1:8788${path}`), dashboard);
       expect(response.status).toBe(200);
       expect(response.headers.has('WWW-Authenticate')).toBe(false);
-      expect(response.headers.get('Cache-Control')).toBe('private, no-store');
-      expect(response.headers.get('X-Robots-Tag')).toContain('noindex');
+      expectPrivate(response);
       const assetRequest = assetFetch.mock.lastCall![0] as Request;
       expect(new URL(assetRequest.url).pathname).toBe(`/${dashboard ? 'dashboard' : 'recruit'}${path}`);
     }
@@ -79,13 +83,13 @@ describe('ローカル専用プレビュー', () => {
 
   it('認証なしで相談を保存・閲覧・更新でき、別Originからの更新は拒否する', async () => {
     expect((await preview(request('/api/consultations', input))).status).toBe(201);
-    const manageLocal = (path: string, body?: unknown, method?: string) => preview(request(path, body, '', 'http://127.0.0.1:8788', method), true);
+    const manageLocal = (path: string, body?: unknown, method?: string) => preview(adminRequest(path, body, method), true);
     const listing = await (await manageLocal('/api/consultations')).json();
     expect(listing.items).toHaveLength(1);
     const path = `/api/consultations/${id}`;
     expect(await (await manageLocal(path)).json()).toMatchObject({ name: input.name });
     const update = { status: '連絡済み', note: 'ローカルで確認', revision: 0 };
-    const crossOrigin = request(path, update, '', 'http://127.0.0.1:8788', 'PATCH');
+    const crossOrigin = adminRequest(path, update, 'PATCH');
     crossOrigin.headers.set('Origin', 'https://other.example');
     expect((await preview(crossOrigin, true)).status).toBe(403);
     expect((await manageLocal(path, update, 'PATCH')).status).toBe(200);
@@ -184,8 +188,7 @@ describe('管理者専用API', () => {
     for (const path of ['/', '/api/consultations', `/api/consultations/${id}`]) {
       const denied = await admin.fetch(request(path, undefined, previewAuth), adminEnv);
       expect(denied.status).toBe(401);
-      expect(denied.headers.get('Cache-Control')).toContain('no-store');
-      expect(denied.headers.get('X-Robots-Tag')).toContain('noindex');
+      expectPrivate(denied);
     }
     expect((await admin.fetch(request('/', undefined, adminAuth), { ...adminEnv, ADMIN_PASSWORD: undefined })).status).toBe(503);
     expect((await admin.fetch(request('/', undefined, adminAuth, 'https://dashboard.okinawakaigo.com'), adminEnv)).status).toBe(503);
